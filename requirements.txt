@@ -1,35 +1,5 @@
-# Technical Debt Negotiator Dependencies
-
-# Core dependencies
-anthropic>=0.18.0          # Claude API
-python-dotenv>=1.0.0       # Environment variables
-
-# Code analysis
-pygments>=2.17.0           # Syntax highlighting
-gitpython>=3.1.0           # Git operations (optional)
-
-# Data processing
-pandas>=2.0.0              # Data analysis (optional)
-numpy>=1.24.0              # Numerical operations (optional)
-
-# Visualization (optional - for local dashboard)
-plotly>=5.18.0             # Interactive charts
-dash>=2.14.0               # Dashboard framework
-
-# Testing
-pytest>=7.4.0              # Testing framework
-pytest-cov>=4.1.0          # Coverage reporting
-
-# Documentation
-mkdocs>=1.5.0              # Documentation site
-mkdocs-material>=9.4.0     # Material theme
-
-# Development
-black>=23.0.0              # Code formatting
-flake8>=6.0.0              # Linting
-mypy>=1.7.0                # Type checking
-
-# Optional integrations
-PyGithub>=2.1.0            # GitHub API (optional)
-jira>=3.5.0                # Jira API (optional)
-requests>=2.31.0           # HTTP requests
+anthropic>=0.18.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+# Optional: jira>=3.5.0   (for live Jira integration)
+# Optional: PyGithub>=2.1.0  (for GitHub API integration)
