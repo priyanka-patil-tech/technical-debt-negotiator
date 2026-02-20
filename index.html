@@ -479,9 +479,11 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
               </div>
               <div style={{fontSize:'14px',color:'var(--text)',lineHeight:1.6}}>{d.description}</div>
             </div>
-            <div className="debt-cost-tag">
-              <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
-              <div className="debt-effort">{d.fix_weeks}w to fix</div>
+            <div className="debt-cost-tag" style={{minWidth:150,textAlign:'right'}}>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'11px',color:'var(--dim)',marginBottom:2}}>cost of doing nothing</div>
+              <div className="debt-cost-num" style={{fontSize:'18px'}}>{fmt(d.annual_cost)}</div>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>lost per year</div>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:6}}>{d.fix_weeks}w to fix</div>
             </div>
           </div>
         ))}
