@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ML Tech Debt Negotiator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --black:#0a0a0a; --ink:#111318; --panel:#161b22; --border:#21262d;
+  --muted:#30363d; --dim:#6e7681; --text:#e6edf3; --soft:#c9d1d9;
+  --red:#ff4757; --amber:#ffa502; --green:#2ed573; --blue:#1e90ff; --accent:#ff6b35;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--black);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* ── Shell ── */
+.shell{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 24px;border-bottom:1px solid var(--border);
+  background:var(--ink);flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:28px;height:28px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);}
+.logo-text{font-family:'DM Serif Display',serif;font-size:16px;}
+.logo-text span{color:var(--accent);font-style:italic;}
+.badge{font-family:'Space Mono',monospace;font-size:9px;padding:2px 8px;border:1px solid;border-radius:2px;}
+.badge-live{color:var(--green);border-color:var(--green);}
+.badge-warn{color:var(--amber);border-color:var(--amber);}
+.badge-info{color:var(--blue);border-color:var(--blue);}
+
+/* ── Body Layout: Main + Log panel ── */
+.body-layout{display:flex;flex:1;overflow:hidden;}
+.main-area{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+.log-panel{
+  width:300px;flex-shrink:0;border-left:1px solid var(--border);
+  background:var(--ink);display:flex;flex-direction:column;
+}
+.log-panel-header{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);
+  letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;
+}
+.log-panel-body{flex:1;overflow-y:auto;padding:10px 14px;}
+.log-line{font-family:'Space Mono',monospace;font-size:10px;line-height:1.8;}
+.log-ok{color:var(--green);}
+.log-info{color:var(--blue);}
+.log-warn{color:var(--amber);}
+.log-error{color:var(--red);}
+.log-dim{color:var(--dim);}
+
+/* ── Cards ── */
+.card{background:var(--panel);border:1px solid var(--border);}
+.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);}
+.card-body{padding:16px;}
+
+/* ── Buttons ── */
+.btn{
+  padding:9px 20px;cursor:pointer;border:none;
+  font-family:'Space Mono',monospace;font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;
+  transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover:not(:disabled){background:#ff8050;transform:translateY(-1px);}
+.btn-primary:disabled{background:var(--muted);cursor:not-allowed;}
+.btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-success{background:var(--green);color:#000;}
+.btn-success:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-block{width:100%;justify-content:center;}
+
+/* ── JIRA items ── */
+.jira-item{
+  padding:10px 14px;border-left:3px solid var(--muted);
+  background:rgba(255,255,255,.025);margin-bottom:6px;
+  cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:10px;
+}
+.jira-item:hover{border-left-color:var(--accent);background:rgba(255,107,53,.08);}
+.jira-item.selected{border-left-color:var(--accent);background:rgba(255,107,53,.12);}
+.jira-key{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;min-width:90px;}
+.jira-title{font-size:12px;color:var(--soft);flex:1;}
+.jira-meta{font-size:10px;color:var(--dim);margin-top:2px;}
+.jira-priority{font-family:'Space Mono',monospace;font-size:9px;padding:1px 6px;border:1px solid;}
+.priority-critical{color:var(--red);border-color:var(--red);}
+.priority-high{color:var(--amber);border-color:var(--amber);}
+.priority-medium{color:var(--blue);border-color:var(--blue);}
+
+/* ── Debt items with checkbox ── */
+.debt-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 14px;border-left:3px solid var(--muted);
+  background:rgba(255,255,255,.025);margin-bottom:6px;
+  transition:all .2s;
+}
+.debt-row.critical{border-left-color:var(--red);}
+.debt-row.high{border-left-color:var(--amber);}
+.debt-row.medium{border-left-color:var(--blue);}
+.debt-checkbox{width:14px;height:14px;cursor:pointer;margin-top:2px;accent-color:var(--accent);flex-shrink:0;}
+.debt-info{flex:1;}
+.debt-type-tag{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;}
+.debt-type-tag.critical{color:var(--red);}
+.debt-type-tag.high{color:var(--amber);}
+.debt-type-tag.medium{color:var(--blue);}
+.debt-desc{font-size:12px;color:var(--soft);margin:2px 0;}
+.debt-loc{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);}
+.debt-cost-tag{text-align:right;flex-shrink:0;}
+.debt-cost-num{font-family:'Space Mono',monospace;font-size:12px;color:var(--red);}
+.debt-effort{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px;}
+
+/* ── Repo display ── */
+.repo-box{
+  background:var(--ink);border:1px solid var(--border);
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  font-family:'Space Mono',monospace;font-size:12px;
+}
+.repo-icon{font-size:16px;}
+.repo-name{color:var(--accent);}
+
+/* ── KPI boxes ── */
+.kpi-grid{display:grid;gap:12px;}
+.kpi-box{background:var(--panel);border:1px solid var(--border);padding:14px;}
+.kpi-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:28px;line-height:1.1;}
+.kpi-val.red{color:var(--red);}
+.kpi-val.green{color:var(--green);}
+.kpi-val.amber{color:var(--amber);}
+.kpi-val.blue{color:var(--blue);}
+.kpi-sub{font-size:10px;color:var(--dim);margin-top:2px;}
+
+/* ── Negotiation cards ── */
+.nego-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;}
+.nego-vs{padding-top:50px;font-family:'DM Serif Display',serif;font-size:24px;color:var(--muted);text-align:center;}
+.nego-card{border:2px solid;padding:16px;}
+.nego-card.opt-a{border-color:var(--red);}
+.nego-card.opt-b{border-color:var(--green);}
+.nego-card-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;}
+.nego-card-label.a{color:var(--red);}
+.nego-card-label.b{color:var(--green);}
+.nego-card-title{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:12px;}
+.nego-stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.nego-stat:last-child{border-bottom:none;}
+.nego-stat-label{color:var(--dim);}
+.nego-stat-val{font-family:'Space Mono',monospace;}
+
+/* ── Final dashboard ── */
+.final-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);}
+.final-kpi{background:var(--panel);padding:14px 16px;}
+
+/* ── Recommendation box ── */
+.rec-box{padding:16px 20px;border:1px solid rgba(46,213,115,.3);background:rgba(46,213,115,.06);}
+.rec-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--green);letter-spacing:.12em;margin-bottom:6px;}
+.rec-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;}
+.rec-body{font-size:12px;color:var(--soft);line-height:1.7;}
+
+/* ── Section header ── */
+.section-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px;}
+.section-sub{font-size:11px;color:var(--dim);margin-bottom:12px;}
+
+/* ── two-col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* ── Inline pills ── */
+.pill{font-family:'Space Mono',monospace;font-size:9px;padding:2px 7px;letter-spacing:.06em;text-transform:uppercase;}
+.pill-red{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);}
+.pill-amber{background:rgba(255,165,2,.15);color:var(--amber);border:1px solid rgba(255,165,2,.3);}
+.pill-blue{background:rgba(30,144,255,.15);color:var(--blue);border:1px solid rgba(30,144,255,.3);}
+.pill-green{background:rgba(46,213,115,.15);color:var(--green);border:1px solid rgba(46,213,115,.3);}
+
+/* ── Animations ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.fade-in{animation:fadeIn .35s ease both;}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+.pulse{animation:pulse 1.5s ease infinite;}
+
+/* ── Progress ── */
+.prog-bar{height:4px;background:var(--muted);}
+.prog-fill{height:100%;background:var(--accent);transition:width .4s ease;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--ink);}
+::-webkit-scrollbar-thumb{background:var(--muted);}
+
+/* ── Agent flow steps ── */
+.agent-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;}
+.agent-step{font-family:'Space Mono',monospace;font-size:9px;padding:4px 10px;border:1px solid var(--border);color:var(--dim);}
+.agent-step.active{border-color:var(--amber);color:var(--amber);background:rgba(255,165,2,.08);}
+.agent-step.done{border-color:var(--green);color:var(--green);background:rgba(46,213,115,.06);}
+.agent-step-arrow{color:var(--muted);font-size:10px;}
+
+/* ── input ── */
+.input-field{background:var(--ink);border:1px solid var(--border);color:var(--text);padding:8px 12px;font-size:12px;font-family:'Space Mono',monospace;outline:none;width:100%;}
+.input-field:focus{border-color:var(--accent);}
+.input-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px;}
+
+/* ── Phase transition ── */
+.phase-header{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--ink);border:1px solid var(--border);border-left:3px solid var(--accent);
+  margin-bottom:16px;
+}
+.phase-icon{font-size:20px;}
+.phase-title{font-family:'DM Serif Display',serif;font-size:18px;}
+.phase-sub{font-size:11px;color:var(--dim);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback} = React;
+
+const fmt = n => '$'+Math.round(n).toLocaleString();
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// ── ML-focused JIRA data ──────────────────────────────────────────────────
+const JIRA_ITEMS = [
+  { key:'ML-1401', title:'Real-time Inference API — latency under 50ms', priority:'critical', repo:'ml-inference-engine', summary:'Feature serving layer blocked by monolithic batch pipeline', points:13 },
+  { key:'ML-1402', title:'Model Drift Detection & Auto-Retraining Pipeline', priority:'critical', repo:'training-orchestrator', summary:'Stale models (15mo old) causing 34% prediction errors', points:21 },
+  { key:'ML-1403', title:'Multi-tenant Feature Store Upgrade', priority:'high', repo:'feature-store-service', summary:'Feature drift causing inconsistent training/serving data', points:8 },
+  { key:'ML-1404', title:'Explainability Dashboard (XAI) for Compliance', priority:'high', repo:'ml-inference-engine', summary:'Black-box models blocking regulatory approval', points:13 },
+  { key:'ML-1405', title:'A/B Testing Framework for Model Experiments', priority:'medium', repo:'experiment-platform', summary:'Manual champion/challenger requires 3-week deploy cycles', points:5 },
+];
+
+// ── Repository data ───────────────────────────────────────────────────────
+const REPO_DATA = {
+  'ml-inference-engine': {
+    name: 'ml-inference-engine',
+    description: 'Core ML model serving & prediction API',
+    language: 'Python / FastAPI',
+    files: 147, stars: 89, lastCommit: '3 days ago',
+    debts: [
+      { id:'D1', severity:'critical', type:'monolithic_batch_pipeline', description:'Single synchronous pipeline blocks real-time inference — all predictions batched every 5min', location:'src/pipeline/batch_runner.py:L1–L892', annual_cost:520000, fix_weeks:6, business_impact:'Real-time feature (ML-1401) completely blocked; competitors serving <50ms already' },
+      { id:'D2', severity:'critical', type:'missing_model_versioning', description:'No model registry or versioning — rollback requires manual file replacement and 4h downtime', location:'src/models/ (entire directory)', annual_cost:380000, fix_weeks:4, business_impact:'Every bad deploy risks 4h outage; 3 incidents in last 6 months = $120K lost revenue' },
+      { id:'D3', severity:'high', type:'god_class_predictor', description:'MLPredictor class handles loading, preprocessing, inference, postprocessing, caching and monitoring (6,200 lines)', location:'src/predictor/ml_predictor.py:L1–L6200', annual_cost:210000, fix_weeks:5, business_impact:'2 sprint delays per quarter; XAI compliance (ML-1404) requires clean separation' },
+      { id:'D4', severity:'high', type:'hardcoded_feature_engineering', description:'47 hardcoded feature transformations scattered across 12 files — updating any feature breaks 3 others', location:'src/features/*.py', annual_cost:175000, fix_weeks:3, business_impact:'Feature Store upgrade (ML-1403) impossible without full rewrite' },
+      { id:'D5', severity:'medium', type:'no_observability', description:'No model performance metrics, drift detection, or alerting — degradation discovered by end users', location:'src/monitoring/ (empty)', annual_cost:95000, fix_weeks:2, business_impact:'ML-1402 drift detection blocked; mean time to detect model failure = 11 days' },
+    ]
+  },
+  'training-orchestrator': {
+    name: 'training-orchestrator',
+    description: 'ML training pipeline & experiment tracking',
+    language: 'Python / Airflow',
+    files: 89, stars: 34, lastCommit: '12 days ago',
+    debts: [
+      { id:'D6', severity:'critical', type:'stale_training_data', description:'Training pipeline uses 15-month-old snapshot; no incremental learning or data freshness checks', location:'dags/training_dag.py:L45–L310', annual_cost:440000, fix_weeks:5, business_impact:'Models degrading — fraud detection accuracy dropped from 94% to 67% over 15 months' },
+      { id:'D7', severity:'high', type:'no_experiment_tracking', description:'MLflow not configured; experiments tracked in spreadsheets. No reproducibility for any model', location:'training/ (no tracking code)', annual_cost:185000, fix_weeks:3, business_impact:'A/B testing framework (ML-1405) requires proper experiment IDs; compliance audit failing' },
+      { id:'D8', severity:'medium', type:'single_gpu_bottleneck', description:'Training hardcoded to single GPU; distributed training disabled — large models take 72h to train', location:'training/trainer.py:L200–L450', annual_cost:120000, fix_weeks:4, business_impact:'Experiment velocity limited to 1 full retrain/week; team blocked from trying new architectures' },
+    ]
+  },
+  'feature-store-service': {
+    name: 'feature-store-service',
+    description: 'Centralized ML feature storage and serving',
+    language: 'Python / Redis / Spark',
+    files: 62, stars: 21, lastCommit: '8 days ago',
+    debts: [
+      { id:'D9', severity:'high', type:'training_serving_skew', description:'Training features computed differently than serving features — 8% accuracy loss in production vs. test', location:'src/compute/offline_store.py & online_store.py', annual_cost:290000, fix_weeks:5, business_impact:'ML-1403 blocked; feature inconsistency root-cause of 34% prediction error rate' },
+      { id:'D10', severity:'medium', type:'no_feature_lineage', description:'No tracking of which features used in which model versions; breaking changes undetected until prod failure', location:'src/registry/ (missing)', annual_cost:140000, fix_weeks:2, business_impact:'Compliance team cannot produce feature audit trail; regulatory approval blocked' },
+    ]
+  },
+};
+
+// All debts flat
+const ALL_DEBTS = Object.values(REPO_DATA).flatMap(r => r.debts);
+
+// ── Log panel ────────────────────────────────────────────────────────────
+function LogPanel({logs}) {
+  const ref = useRef(null);
+  useEffect(()=>{ if(ref.current) ref.current.scrollTop = ref.current.scrollHeight; },[logs]);
+  return (
+    <div className="log-panel">
+      <div className="log-panel-header">
+        <span>Agent Logs</span>
+        <span className="badge badge-live">{logs.length}</span>
+      </div>
+      <div className="log-panel-body" ref={ref}>
+        {logs.length === 0 && <div className="log-line log-dim">Waiting for activity…</div>}
+        {logs.map((l,i)=>(
+          <div key={i} className={`log-line log-${l.type}`}>{l.msg}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Phase 1: JIRA Backlog ─────────────────────────────────────────────────
+function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
+  return (
+    <div className="fade-in">
+      <div className="phase-header">
+        <div className="phase-icon">🎫</div>
+        <div>
+          <div className="phase-title">JIRA Backlog — ML Platform</div>
+          <div className="phase-sub">Blocked tech debt items from your sprint backlog. Click an item to trace its repository dependencies.</div>
+        </div>
+        {!logs.length && (
+          <button className="btn btn-primary" style={{marginLeft:'auto'}} onClick={onLoad} disabled={running}>
+            {running ? <><span className="spin">⟳</span> Loading…</> : '▶ Load JIRA Backlog'}
+          </button>
+        )}
+      </div>
+
+      {logs.length > 0 && (
+        <div className="fade-in">
+          <div style={{marginBottom:8,fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
+            {JIRA_ITEMS.length} blocker items · Click to trace repository
+          </div>
+          {JIRA_ITEMS.map(item=>(
+            <div key={item.key}
+              className={`jira-item ${selectedItem?.key===item.key?'selected':''}`}
+              onClick={()=>onSelect(item)}>
+              <div>
+                <div className="jira-key">{item.key}</div>
+                <span className={`jira-priority priority-${item.priority}`}>{item.priority}</span>
+              </div>
+              <div>
+                <div className="jira-title">{item.title}</div>
+                <div className="jira-meta">{item.summary}</div>
+              </div>
+              <div style={{marginLeft:'auto',fontSize:'9px',fontFamily:"'Space Mono',monospace",color:'var(--dim)',whiteSpace:'nowrap'}}>{item.points}pts</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Phase 2: Repository ───────────────────────────────────────────────────
+function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
+  const repo = REPO_DATA[repoName];
+  return (
+    <div className="fade-in">
+      <div className="phase-header">
+        <div className="phase-icon">📁</div>
+        <div>
+          <div className="phase-title">Repository Linked</div>
+          <div className="phase-sub">Tracing <strong style={{color:'var(--accent)'}}>{selectedJira?.key}</strong> → repository dependency resolved</div>
+        </div>
+      </div>
+
+      <div className="card" style={{marginBottom:14}}>
+        <div className="card-head"><span className="card-title">Linked Repository</span></div>
+        <div className="card-body">
+          <div className="repo-box">
+            <div className="repo-icon">⚙️</div>
+            <div>
+              <div className="repo-name">{repoName}</div>
+              <div style={{fontSize:'10px',color:'var(--dim)'}}>{repo?.description}</div>
+            </div>
+            <div style={{marginLeft:'auto',textAlign:'right'}}>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.language}</div>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.files} files · last commit {repo?.lastCommit}</div>
+            </div>
+          </div>
+          <div style={{marginTop:12}}>
+            <label className="input-label">Repository URL</label>
+            <input className="input-field" readOnly value={`https://github.com/ml-platform/${repoName}`}/>
+          </div>
+        </div>
+      </div>
+
+      {!scanned && (
+        <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
+          {scanning ? <><span className="spin">⟳</span> Scanning…</> : '🔍 Scan Repositories'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Phase 3: Debt Items ───────────────────────────────────────────────────
+function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
+  const total = debts.filter(d=>selected.includes(d.id)).reduce((s,d)=>s+d.annual_cost,0);
+  return (
+    <div className="fade-in">
+      <div className="phase-header">
+        <div className="phase-icon">🤖</div>
+        <div>
+          <div className="phase-title">Debt Items Detected</div>
+          <div className="phase-sub">AI-identified technical debt across linked repositories. Select items to include in cost calculation.</div>
+        </div>
+        <div style={{marginLeft:'auto',textAlign:'right'}}>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>SELECTED ANNUAL COST</div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'22px',color:'var(--red)'}}>{fmt(total)}</div>
+        </div>
+      </div>
+
+      <div style={{maxHeight:'calc(100vh - 380px)',overflowY:'auto',marginBottom:14}}>
+        {debts.map(d=>(
+          <div key={d.id} className={`debt-row ${d.severity}`}>
+            <input type="checkbox" className="debt-checkbox"
+              checked={selected.includes(d.id)}
+              onChange={()=>onToggle(d.id)}/>
+            <div className="debt-info">
+              <div className="debt-type-tag" style={{marginBottom:2}}>
+                <span className={`debt-type-tag ${d.severity}`}>[{d.type.replace(/_/g,' ').toUpperCase()}]</span>
+                <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`} style={{marginLeft:6}}>{d.severity}</span>
+              </div>
+              <div className="debt-desc">{d.description}</div>
+              <div className="debt-loc">📍 {d.location}</div>
+              {d.business_impact && <div style={{fontSize:'10px',color:'var(--dim)',fontStyle:'italic',marginTop:3}}>{d.business_impact}</div>}
+            </div>
+            <div className="debt-cost-tag">
+              <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
+              <div className="debt-effort">{d.fix_weeks}w to fix</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!costData && (
+        <button className="btn btn-primary btn-block" onClick={onCalc} disabled={calculating||selected.length===0}>
+          {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Effort & Cost (${selected.length} items selected)`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Phase 4: Cost Preview (Live) ──────────────────────────────────────────
+function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation}) {
+  return (
+    <div className="fade-in">
+      <div className="phase-header">
+        <div className="phase-icon">💰</div>
+        <div>
+          <div className="phase-title">Refactoring Economics</div>
+          <div className="phase-sub">Live calculation based on selected debt items. Numbers update on selection change.</div>
+        </div>
+      </div>
+
+      <div className="three-col" style={{marginBottom:14}}>
+        {[
+          {label:'Refactoring Cost',val:fmt(costData.refactoring_cost),cls:'amber',sub:`${costData.effort_weeks}w × 4 engineers`},
+          {label:'Annual Savings',val:fmt(costData.annual_savings),cls:'green',sub:'Debt costs eliminated'},
+          {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'blue',sub:'Then saves forever'},
+          {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:costData.roi_pct>0?'green':'red',sub:'Return on investment'},
+          {label:'Critical Issues',val:costData.critical_count,cls:'red',sub:`${costData.total_count} total selected`},
+          {label:'Prod Risk (Build Now)',val:'65%',cls:'red',sub:'Regression probability'},
+        ].map((k,i)=>(
+          <div key={i} className="kpi-box">
+            <div className="kpi-label">{k.label}</div>
+            <div className={`kpi-val ${k.cls}`}>{k.val}</div>
+            <div className="kpi-sub">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {!negotiation && (
+        <button className="btn btn-blue btn-block" onClick={onNegotiate} disabled={negotiating}>
+          {negotiating ? <><span className="spin">⟳</span> Running Negotiation Agent…</> : '⚖️ Run Negotiations'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Phase 5: Negotiation ──────────────────────────────────────────────────
+function PhaseNego({negotiation, costData, onDashboard}) {
+  return (
+    <div className="fade-in">
+      <div className="phase-header">
+        <div className="phase-icon">⚖️</div>
+        <div>
+          <div className="phase-title">Negotiation Agent — Refactor vs Build</div>
+          <div className="phase-sub">AI agent cross-references debt impact against JIRA feature blockers and models both paths.</div>
+        </div>
+      </div>
+
+      <div className="nego-grid" style={{marginBottom:14}}>
+        <div className="nego-card opt-a">
+          <div className="nego-card-label a">OPTION A</div>
+          <div className="nego-card-title">Build Features Now</div>
+          {[
+            ['Timeline','16 weeks'],['Success Rate','35%'],['Risk','HIGH'],
+            ['Regression Risk','65%'],['Ongoing Cost','$23K/mo'],['Break-Even','Never (costs grow)'],
+          ].map(([l,v],i)=>(
+            <div key={i} className="nego-stat">
+              <span className="nego-stat-label">{l}</span>
+              <span className="nego-stat-val" style={{color:i===1||i===2?'var(--red)':undefined}}>{v}</span>
+            </div>
+          ))}
+          <div style={{marginTop:10,fontSize:'10px',color:'var(--red)'}}>
+            {['65% regression on fragile ML pipeline','Real-time inference remains blocked','15-month-old training data degrades accuracy','$276K/yr in mounting maintenance'].map((r,i)=>(
+              <div key={i} style={{marginBottom:3}}>✗ {r}</div>
+            ))}
+          </div>
+        </div>
+
+        <div className="nego-vs">vs</div>
+
+        <div className="nego-card opt-b">
+          <div className="nego-card-label b">OPTION B — RECOMMENDED</div>
+          <div className="nego-card-title">Refactor First, Then Build</div>
+          {[
+            ['Refactor','12 weeks'],['Feature Build','4 weeks'],['Total','16 weeks'],
+            ['Success Rate','92%'],['Risk','LOW'],['Break-Even',`Week ${costData.break_even_weeks}`],
+          ].map(([l,v],i)=>(
+            <div key={i} className="nego-stat">
+              <span className="nego-stat-label">{l}</span>
+              <span className="nego-stat-val" style={{color:i===3||i===4?'var(--green)':undefined}}>{v}</span>
+            </div>
+          ))}
+          <div style={{marginTop:10,fontSize:'10px',color:'var(--green)'}}>
+            {[`All 5 JIRA features unblocked`,`Real-time inference <50ms enabled`,`Auto-retraining pipeline enabled`,`${fmt(costData.annual_savings)}/yr debt costs eliminated`].map((r,i)=>(
+              <div key={i} style={{marginBottom:3}}>✓ {r}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rec-box" style={{marginBottom:14}}>
+        <div className="rec-label">✓ AGENT RECOMMENDATION</div>
+        <div className="rec-title">{negotiation.recommendation==='refactor_first'?'Refactor First — Then Ship All 5 Features':'Build With Caution'}</div>
+        <div className="rec-body">{negotiation.reason}</div>
+      </div>
+
+      <button className="btn btn-success btn-block" onClick={onDashboard}>
+        📊 View Final Dashboard →
+      </button>
+    </div>
+  );
+}
+
+// ── Phase 6: Final Dashboard ──────────────────────────────────────────────
+function PhaseDashboard({costData, negotiation, selectedDebts, allDebts}) {
+  const debts = allDebts.filter(d=>selectedDebts.includes(d.id));
+  return (
+    <div className="fade-in">
+      <div className="phase-header" style={{borderLeftColor:'var(--green)'}}>
+        <div className="phase-icon">📊</div>
+        <div>
+          <div className="phase-title">Final Dashboard — ML Platform Tech Debt Report</div>
+          <div className="phase-sub">Complete analysis ready to share with your PM, CTO, or engineering board.</div>
+        </div>
+        <span className="badge badge-live" style={{marginLeft:'auto'}}>ANALYSIS COMPLETE</span>
+      </div>
+
+      <div className="final-kpi-grid" style={{marginBottom:14}}>
+        {[
+          {label:'Annual Debt Cost',val:fmt(costData.annual_savings),cls:'red',sub:'eliminated after refactor'},
+          {label:'Refactoring Investment',val:fmt(costData.refactoring_cost),cls:'amber',sub:`${costData.effort_weeks} weeks`},
+          {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'green',sub:'then saves forever'},
+          {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:'green',sub:'return on investment'},
+          {label:'Features Unblocked',val:'5/5',cls:'blue',sub:'JIRA ML-1401 → ML-1405'},
+        ].map((k,i)=>(
+          <div key={i} className="final-kpi">
+            <div className="kpi-label">{k.label}</div>
+            <div className={`kpi-val ${k.cls}`} style={{fontSize:'22px'}}>{k.val}</div>
+            <div className="kpi-sub">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="rec-box" style={{marginBottom:14}}>
+        <div className="rec-label">✓ FINAL RECOMMENDATION</div>
+        <div className="rec-title">Refactor ML Infrastructure First — Ship All 5 Features by Week 16</div>
+        <div className="rec-body">
+          The ML platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
+          The monolithic batch pipeline and 15-month-old training data are directly blocking 4 of 5 JIRA features.
+          Building on current infrastructure = 65% regression risk + $23K/month compounding.
+          Refactoring (12 weeks) enables real-time inference, auto-retraining, and XAI compliance — with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
+        </div>
+      </div>
+
+      <div style={{marginBottom:14}}>
+        <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
+          Selected Debt Items ({debts.length})
+        </div>
+        {debts.map(d=>(
+          <div key={d.id} className={`debt-row ${d.severity}`} style={{marginBottom:4}}>
+            <div className="debt-info">
+              <div><span className={`debt-type-tag ${d.severity}`}>[{d.type.replace(/_/g,' ').toUpperCase()}]</span> <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span></div>
+              <div className="debt-desc">{d.description}</div>
+            </div>
+            <div className="debt-cost-tag">
+              <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
+              <div className="debt-effort">{d.fix_weeks}w fix</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{padding:'14px 16px',background:'var(--panel)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-around',flexWrap:'wrap',gap:16}}>
+        {[['🎫','JIRA Fetcher'],['📁','Repo Scanner'],['🤖','Debt Analyzer'],['💰','Cost Model'],['⚖️','Negotiator']].map(([icon,label],i)=>(
+          <div key={i} style={{textAlign:'center'}}>
+            <div style={{fontSize:'24px'}}>{icon}</div>
+            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>✓ {label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────
+function App() {
+  const [logs, setLogs] = useState([]);
+  const [phase, setPhase] = useState('jira'); // jira | repo | debt | cost | nego | dashboard
+
+  // Jira
+  const [jiraLoading, setJiraLoading] = useState(false);
+  const [jiraLoaded, setJiraLoaded] = useState(false);
+  const [selectedJira, setSelectedJira] = useState(null);
+
+  // Repo
+  const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
+
+  // Debt
+  const [selectedDebts, setSelectedDebts] = useState([]);
+  const [calculating, setCalculating] = useState(false);
+  const [costData, setCostData] = useState(null);
+
+  // Nego
+  const [negotiating, setNegotiating] = useState(false);
+  const [negotiation, setNegotiation] = useState(null);
+
+  const addLog = useCallback((msg, type='info') => setLogs(l=>[...l,{msg,type}]), []);
+
+  // Compute cost live based on selected debts
+  const computeCost = (ids) => {
+    const items = ALL_DEBTS.filter(d=>ids.includes(d.id));
+    const annual_savings = items.reduce((s,d)=>s+d.annual_cost,0);
+    const effort_weeks = items.reduce((s,d)=>s+d.fix_weeks,0);
+    const refactoring_cost = effort_weeks * 4 * 8000; // 4 engineers × $8k/week
+    const break_even_weeks = annual_savings > 0 ? Math.ceil(refactoring_cost/(annual_savings/52)) : 0;
+    const roi_pct = annual_savings > 0 ? Math.round(((annual_savings-refactoring_cost)/refactoring_cost)*100) : 0;
+    const critical_count = items.filter(d=>d.severity==='critical').length;
+    return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length };
+  };
+
+  // Load JIRA
+  const loadJira = async () => {
+    setJiraLoading(true);
+    addLog('▶ Connecting to JIRA Cloud (ml-platform.atlassian.net)…','info');
+    await wait(600);
+    addLog('  ✓ Authenticated via OAuth token','ok');
+    await wait(400);
+    addLog('  🔍 Querying backlog: project=ML AND labels=tech-debt AND priority IN (Critical,High,Medium)','info');
+    await wait(700);
+    addLog(`  ✓ Found ${JIRA_ITEMS.length} blocker items linked to tech debt tracker`,'ok');
+    JIRA_ITEMS.forEach((item,i)=>{
+      setTimeout(()=>addLog(`    ${item.key}: ${item.title} [${item.priority}]`,'dim'),i*120);
+    });
+    await wait(JIRA_ITEMS.length*120+300);
+    addLog('✓ JIRA backlog loaded — click an item to trace its repository','ok');
+    setJiraLoaded(true);
+    setJiraLoading(false);
+  };
+
+  const selectJira = async (item) => {
+    setSelectedJira(item);
+    addLog(`──────────────────────────────────`,'dim');
+    addLog(`▶ Tracing ${item.key} → repository dependency…`,'info');
+    await wait(400);
+    addLog(`  ✓ Repository linked: ${item.repo}`,'ok');
+    addLog(`  📦 Cloning metadata for ${item.repo}…`,'info');
+    await wait(300);
+    addLog(`  ✓ ${REPO_DATA[item.repo]?.files} files indexed`,'ok');
+    setPhase('repo');
+    setScanned(false);
+    setSelectedDebts([]);
+    setCostData(null);
+    setNegotiation(null);
+  };
+
+  const scanRepo = async () => {
+    setScanning(true);
+    const repo = REPO_DATA[selectedJira.repo];
+    addLog(`──────────────────────────────────`,'dim');
+    addLog(`▶ Scanning ${selectedJira.repo} for tech debt…`,'info');
+    await wait(500);
+    addLog(`  🤖 Claude analyzing ${repo.files} Python files…`,'info');
+    await wait(800);
+    addLog(`  🔍 Pattern detection: god classes, batch pipelines, missing registries…`,'info');
+    await wait(600);
+    repo.debts.forEach((d,i)=>{
+      setTimeout(()=>addLog(`  ⚠ ${d.severity.toUpperCase()}: ${d.type} — ${fmt(d.annual_cost)}/yr`,d.severity==='critical'?'error':d.severity==='high'?'warn':'info'),i*200);
+    });
+    await wait(repo.debts.length*200+400);
+    addLog(`✓ Found ${repo.debts.length} debt items (${fmt(repo.debts.reduce((s,d)=>s+d.annual_cost,0))}/yr total)`,'ok');
+    const ids = repo.debts.map(d=>d.id);
+    setSelectedDebts(ids);
+    setScanning(false);
+    setScanned(true);
+    setPhase('debt');
+  };
+
+  const toggleDebt = (id) => {
+    const next = selectedDebts.includes(id) ? selectedDebts.filter(x=>x!==id) : [...selectedDebts,id];
+    setSelectedDebts(next);
+    if(costData) setCostData(computeCost(next));
+  };
+
+  const calcCost = async () => {
+    setCalculating(true);
+    addLog(`──────────────────────────────────`,'dim');
+    addLog(`▶ Calculating refactoring economics for ${selectedDebts.length} items…`,'info');
+    await wait(500);
+    const c = computeCost(selectedDebts);
+    addLog(`  ✓ Total annual cost: ${fmt(c.annual_savings)}`,'ok');
+    await wait(400);
+    addLog(`  ✓ Refactoring effort: ${c.effort_weeks}w × 4 engineers × $8K/wk = ${fmt(c.refactoring_cost)}`,'ok');
+    await wait(500);
+    addLog(`  ✓ Break-even: Week ${c.break_even_weeks}`,'ok');
+    addLog(`  ✓ First-year ROI: ${c.roi_pct}%`,'ok');
+    await wait(300);
+    addLog(`✓ Cost model ready`,'ok');
+    setCostData(c);
+    setCalculating(false);
+    setPhase('cost');
+  };
+
+  const runNegotiation = async () => {
+    setNegotiating(true);
+    addLog(`──────────────────────────────────`,'dim');
+    addLog(`▶ Running Negotiation Agent (Claude)…`,'info');
+    await wait(600);
+    addLog(`  ⚖️  Cross-referencing ${selectedDebts.length} debt items vs. ${JIRA_ITEMS.length} JIRA tickets…`,'info');
+    await wait(700);
+    const blocked = JIRA_ITEMS.filter(t=>t.repo===selectedJira?.repo||t.priority==='critical');
+    addLog(`  🚫 ${blocked.length}/${JIRA_ITEMS.length} features blocked or critically slowed by debt`,'warn');
+    await wait(500);
+    addLog(`  🎯 Option A (Build Now): 16w, 35% success, $23K/mo ongoing`,'warn');
+    await wait(400);
+    addLog(`  🎯 Option B (Refactor First): ${costData.effort_weeks+4}w, 92% success, saves ${fmt(costData.annual_savings)}/yr`,'info');
+    await wait(600);
+    addLog(`  ✓ RECOMMENDATION: REFACTOR FIRST`,'ok');
+    const nego = {
+      recommendation:'refactor_first',
+      reason:`${blocked.length} of ${JIRA_ITEMS.length} features are blocked by the ML platform's monolithic batch pipeline and stale training data. Building now carries 65% regression risk plus $23K/month compounding maintenance. Refactoring (${costData.effort_weeks} weeks) enables all features at 92% confidence — and breaks even at Week ${costData.break_even_weeks}, generating ${fmt(costData.annual_savings)}/year thereafter.`,
+    };
+    setNegotiation(nego);
+    setNegotiating(false);
+    setPhase('nego');
+    addLog(`✓ Negotiation complete — recommendation ready`,'ok');
+  };
+
+  const activeRepo = selectedJira ? REPO_DATA[selectedJira.repo] : null;
+  const activeDebts = activeRepo ? activeRepo.debts : [];
+
+  const phaseLabel = {
+    jira:'JIRA Backlog Scan',repo:'Repository Browser',debt:'Debt Detection',
+    cost:'Cost & ROI Analysis',nego:'Negotiation Agent',dashboard:'Final Dashboard',
+  }[phase];
+
+  return (
+    <div className="shell">
+      <div className="topbar">
+        <div className="logo">
+          <div className="logo-mark">TD</div>
+          <div className="logo-text">ML Debt <span>Negotiator</span></div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          {selectedJira && <span className="badge badge-info">{selectedJira.key}</span>}
+          {costData && <span className="badge badge-warn">{fmt(costData.annual_savings)}/YR DEBT</span>}
+          {negotiation && <span className="badge badge-live">ANALYSIS COMPLETE</span>}
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',textTransform:'uppercase',letterSpacing:'.1em'}}>{phaseLabel}</span>
+        </div>
+      </div>
+
+      <div className="body-layout">
+        <div className="main-area">
+          {/* Always show JIRA phase at top */}
+          <PhaseJira
+            onSelect={selectJira}
+            selectedItem={selectedJira}
+            logs={logs}
+            running={jiraLoading}
+            onLoad={loadJira}
+          />
+
+          {/* Repo phase */}
+          {selectedJira && (phase==='repo'||phase==='debt'||phase==='cost'||phase==='nego'||phase==='dashboard') && (
+            <PhaseRepo
+              selectedJira={selectedJira}
+              repoName={selectedJira.repo}
+              onScan={scanRepo}
+              scanning={scanning}
+              scanned={scanned}
+            />
+          )}
+
+          {/* Debt phase */}
+          {scanned && (phase==='debt'||phase==='cost'||phase==='nego'||phase==='dashboard') && (
+            <PhaseDebt
+              debts={activeDebts}
+              selected={selectedDebts}
+              onToggle={toggleDebt}
+              onCalc={calcCost}
+              calculating={calculating}
+              costData={costData}
+            />
+          )}
+
+          {/* Cost phase */}
+          {costData && (phase==='cost'||phase==='nego'||phase==='dashboard') && (
+            <PhaseCost
+              costData={costData}
+              selectedDebts={selectedDebts}
+              allDebts={activeDebts}
+              onNegotiate={runNegotiation}
+              negotiating={negotiating}
+              negotiation={negotiation}
+            />
+          )}
+
+          {/* Nego phase */}
+          {negotiation && (phase==='nego'||phase==='dashboard') && (
+            <PhaseNego
+              negotiation={negotiation}
+              costData={costData}
+              onDashboard={()=>setPhase('dashboard')}
+            />
+          )}
+
+          {/* Dashboard */}
+          {phase==='dashboard' && (
+            <PhaseDashboard
+              costData={costData}
+              negotiation={negotiation}
+              selectedDebts={selectedDebts}
+              allDebts={ALL_DEBTS}
+            />
+          )}
+        </div>
+
+        <LogPanel logs={logs}/>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
