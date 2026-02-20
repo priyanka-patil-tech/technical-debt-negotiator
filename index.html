@@ -257,54 +257,119 @@ const {useState,useEffect,useRef,useCallback} = React;
 const fmt = n => '$'+Math.round(n).toLocaleString();
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-// ── ML-focused JIRA data ──────────────────────────────────────────────────
-const JIRA_ITEMS = [
-  { key:'ML-1401', title:'Fraud alerts take 5+ minutes — customers want instant notifications', priority:'critical', repo:'ml-inference-engine', summary:'Blocked: the system processes all transactions in a nightly batch instead of checking each one live', points:13 },
-  { key:'ML-1402', title:'Our fraud model is 15 months out of date — it is missing new scam patterns', priority:'critical', repo:'training-orchestrator', summary:'Blocked: no automated pipeline to retrain the model; accuracy has dropped from 94% to 67% as fraudsters adapted', points:21 },
-  { key:'ML-1403', title:'Predictions in testing look great but break in production — data mismatch', priority:'high', repo:'feature-store-service', summary:'Blocked: the data the model trains on is calculated differently from the data it sees at runtime, causing an 8% accuracy loss', points:8 },
-  { key:'ML-1404', title:'Regulators are asking why we flagged a transaction — we cannot explain it', priority:'high', repo:'ml-inference-engine', summary:'Blocked: the model is a black box with no audit trail; compliance approval is on hold until we can show our reasoning', points:13 },
-];
+// ── All Products ──────────────────────────────────────────────────────────
+const PRODUCTS_DATA = {
 
-// ── Repository data ───────────────────────────────────────────────────────
-const REPO_DATA = {
-  'ml-inference-engine': {
-    name: 'ml-inference-engine',
-    description: 'Core ML model serving & prediction API',
-    language: 'Python / FastAPI',
-    files: 147, stars: 89, lastCommit: '3 days ago',
-    debts: [
-      { id:'D1', severity:'critical', type:'Batch-Only Pipeline', description:'Every fraud check joins a queue and is processed in bulk every 5 minutes. There is no way to check a single transaction the moment it happens — making real-time alerts impossible with the current setup.', annual_cost:520000, fix_weeks:6 },
-      { id:'D2', severity:'critical', type:'No Safe Rollback', description:'If a bad model update goes live, fixing it means engineers manually swapping files on the server — a process that takes 4 hours and causes a full outage. There is no one-click rollback. Three incidents in the last 6 months cost the business $120K.', annual_cost:380000, fix_weeks:4 },
-      { id:'D3', severity:'high', type:'One File Does Everything', description:'A single code file is responsible for 6,200 lines of logic covering loading models, cleaning data, running predictions, caching results, and monitoring — all tangled together. Nobody fully understands it, so any change carries high risk of breaking something else.', annual_cost:210000, fix_weeks:5 },
-      { id:'D4', severity:'high', type:'Hardcoded Business Rules', description:'47 data transformation rules are scattered across 12 different files with no documentation. Changing one rule unpredictably breaks three others. Adding a new data source or updating a rule requires a full investigation before touching anything.', annual_cost:175000, fix_weeks:3 },
-      { id:'D5', severity:'medium', type:'No Performance Monitoring', description:'There are no automatic checks on how well the fraud model is performing day-to-day. When accuracy drops, customers notice fraudulent transactions slipping through before the engineering team does. Average time to detect a model failure is 11 days.', annual_cost:95000, fix_weeks:2 },
-    ]
+  'fraud-detection': {
+    icon: '🤖',
+    label: 'Fraud Detection ML Platform',
+    description: 'ML pipeline powering real-time fraud detection',
+    project: { name:'Fraud Detection ML Platform', key:'ML', id:'ML-1401', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/ML/boards/backlog' },
+    jiraItems: [
+      { key:'ML-1401', title:'Fraud alerts take 5+ minutes — customers want instant notifications', priority:'critical', repo:'ml-inference-engine', points:13 },
+      { key:'ML-1402', title:'Our fraud model is 15 months out of date — it is missing new scam patterns', priority:'critical', repo:'training-orchestrator', points:21 },
+      { key:'ML-1403', title:'Predictions in testing look great but break in production — data mismatch', priority:'high', repo:'feature-store-service', points:8 },
+      { key:'ML-1404', title:'Regulators are asking why we flagged a transaction — we cannot explain it', priority:'high', repo:'ml-inference-engine', points:13 },
+    ],
+    repoData: {
+      'ml-inference-engine': {
+        name:'ml-inference-engine', description:'Core ML model serving & prediction API',
+        language:'Python / FastAPI', files:147, stars:89, lastCommit:'3 days ago',
+        debts:[
+          { id:'D1', severity:'critical', type:'Batch-Only Pipeline', description:'Every fraud check joins a queue and is processed in bulk every 5 minutes. There is no way to check a single transaction the moment it happens — making real-time alerts impossible with the current setup.', annual_cost:520000, fix_weeks:6 },
+          { id:'D2', severity:'critical', type:'No Safe Rollback', description:'If a bad model update goes live, fixing it means engineers manually swapping files on the server — a process that takes 4 hours and causes a full outage. There is no one-click rollback. Three incidents in the last 6 months cost the business $120K.', annual_cost:380000, fix_weeks:4 },
+          { id:'D3', severity:'high', type:'One File Does Everything', description:'A single code file is responsible for 6,200 lines of logic covering loading models, cleaning data, running predictions, caching results, and monitoring — all tangled together. Nobody fully understands it, so any change carries high risk of breaking something else.', annual_cost:210000, fix_weeks:5 },
+          { id:'D4', severity:'high', type:'Hardcoded Business Rules', description:'47 data transformation rules are scattered across 12 different files with no documentation. Changing one rule unpredictably breaks three others. Adding a new data source or updating a rule requires a full investigation before touching anything.', annual_cost:175000, fix_weeks:3 },
+          { id:'D5', severity:'medium', type:'No Performance Monitoring', description:'There are no automatic checks on how well the fraud model is performing day-to-day. When accuracy drops, customers notice fraudulent transactions slipping through before the engineering team does. Average time to detect a model failure is 11 days.', annual_cost:95000, fix_weeks:2 },
+        ]
+      },
+      'training-orchestrator': {
+        name:'training-orchestrator', description:'ML training pipeline & experiment tracking',
+        language:'Python / Airflow', files:89, stars:34, lastCommit:'12 days ago',
+        debts:[
+          { id:'D6', severity:'critical', type:'15-Month-Old Training Data', description:'The fraud model has not been retrained in 15 months. It has never seen any scam patterns that emerged in the past year. As a result, detection accuracy has fallen from 94% to 67% — meaning 1 in 3 fraud cases is now being missed.', annual_cost:440000, fix_weeks:5 },
+          { id:'D7', severity:'high', type:'Experiments Tracked in Spreadsheets', description:'There is no system to record what data, settings, or code produced each model. Past results cannot be reproduced. If regulators ask which inputs led to a decision, the team cannot answer. Every new experiment starts from scratch with no institutional memory.', annual_cost:185000, fix_weeks:3 },
+          { id:'D8', severity:'medium', type:'Training Limited to One Machine', description:'The model training process is locked to a single server and cannot be split across multiple machines. Training a large model takes up to 72 hours, limiting the team to one experiment per week and blocking engineers from trying new approaches quickly.', annual_cost:120000, fix_weeks:4 },
+        ]
+      },
+      'feature-store-service': {
+        name:'feature-store-service', description:'Centralised ML feature storage and serving',
+        language:'Python / Redis / Spark', files:62, stars:21, lastCommit:'8 days ago',
+        debts:[
+          { id:'D9', severity:'high', type:'Test Results Don\'t Match Production', description:'The data the model is trained and tested on is calculated differently from the data it sees when running live. This mismatch causes an 8% accuracy gap between what the team sees in testing and what actually happens in production — giving false confidence before launch.', annual_cost:290000, fix_weeks:5 },
+          { id:'D10', severity:'medium', type:'No Audit Trail for Model Inputs', description:'Nobody tracks which data inputs each model version relies on. When something changes upstream, the impact on models is invisible until a failure occurs in production. The compliance team cannot produce an audit trail, which is currently blocking regulatory approval.', annual_cost:140000, fix_weeks:2 },
+        ]
+      },
+    },
+    nego: {
+      optA_items: [
+        'Fraud alerts stay delayed 5+ min — batch pipeline blocks real-time',
+        'Model accuracy stuck at 67% and falling every week',
+        'Touching any data rule risks silent bugs across 12 files',
+        'Regulators reject compliance dashboard — decisions unexplainable',
+        'Bad deploys still mean 4h outage — no rollback exists',
+      ],
+      optB_items: [
+        'Fraud alerts under 1 second — real-time pipeline replaces batch',
+        'Model accuracy back to 94%+ with automated weekly retraining',
+        'Data rules safe to change — documented, centralised, tested',
+        'Every decision explainable — compliance unblocked',
+        'One-click rollback — no more 4h outages from bad deploys',
+      ],
+      dashFinalTitle: 'Refactor ML Infrastructure First',
+      dashNote: 'The monolithic batch pipeline and 15-month-old training data are directly blocking the majority of JIRA features. Building on current infrastructure = 65% regression risk + $23K/month compounding. Refactoring enables real-time inference, auto-retraining, and XAI compliance —',
+    },
   },
-  'training-orchestrator': {
-    name: 'training-orchestrator',
-    description: 'ML training pipeline & experiment tracking',
-    language: 'Python / Airflow',
-    files: 89, stars: 34, lastCommit: '12 days ago',
-    debts: [
-      { id:'D6', severity:'critical', type:'15-Month-Old Training Data', description:'The fraud model has not been retrained in 15 months. It has never seen any scam patterns that emerged in the past year. As a result, detection accuracy has fallen from 94% to 67% — meaning 1 in 3 fraud cases is now being missed.', annual_cost:440000, fix_weeks:5 },
-      { id:'D7', severity:'high', type:'Experiments Tracked in Spreadsheets', description:'There is no system to record what data, settings, or code produced each model. Past results cannot be reproduced. If regulators ask which inputs led to a decision, the team cannot answer. Every new experiment starts from scratch with no institutional memory.', annual_cost:185000, fix_weeks:3 },
-      { id:'D8', severity:'medium', type:'Training Limited to One Machine', description:'The model training process is locked to a single server and cannot be split across multiple machines. Training a large model takes up to 72 hours, limiting the team to one experiment per week and blocking engineers from trying new approaches quickly.', annual_cost:120000, fix_weeks:4 },
-    ]
+
+  'payment-platform': {
+    icon: '💳',
+    label: 'Payment Platform',
+    description: 'Core payment processing & checkout infrastructure',
+    project: { name:'Payment Platform', key:'PAY', id:'PAY-2001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/PAY/boards/backlog' },
+    jiraItems: [
+      { key:'PAY-2001', title:'Add Apple Pay & Google Wallet — checkout options every competitor already offers', priority:'critical', repo:'payment-platform-tech-debt', points:13 },
+      { key:'PAY-2002', title:'Checkout failure rate is 3.2% — every failed payment is $340K/month in abandoned carts', priority:'critical', repo:'payment-platform-tech-debt', points:21 },
+      { key:'PAY-2003', title:'PCI-DSS compliance audit deadline is Q2 — failing means losing card processing rights', priority:'high', repo:'payment-platform-tech-debt', points:13 },
+      { key:'PAY-2004', title:'Deployments take 4 hours and fail 1 in 5 times — engineers spend 20% of their week on this', priority:'high', repo:'payment-platform-tech-debt', points:8 },
+    ],
+    repoData: {
+      'payment-platform-tech-debt': {
+        name:'payment-platform-tech-debt', description:'Core payment processing & checkout platform',
+        language:'Java / Spring Boot', files:312, stars:45, lastCommit:'2 days ago',
+        debts:[
+          { id:'P1', severity:'critical', type:'God Commons Library', description:'A single shared library is imported by all 23 microservices. Any change to it requires redeploying the entire payment platform simultaneously — a coordinated 3-day effort that blocks all other work. At Amazon, this exact pattern caused 3-day deploy cycles across teams.', annual_cost:268000, fix_weeks:6 },
+          { id:'P2', severity:'critical', type:'Hardcoded API Keys & Config Sprawl', description:'Production API keys are hardcoded in a checked-in config file visible to anyone with repo access. On top of this, 147 feature flags are still evaluated on every payment request — 89 belong to experiments that ended over 2 years ago and were never cleaned up. This directly mirrors the Uber God Mode breach caused by hardcoded admin credentials.', annual_cost:312000, fix_weeks:4 },
+          { id:'P3', severity:'critical', type:'Log4Shell Vulnerability (CVE-2021-44228)', description:'The shared logging library runs Log4j 1.2.17, which carries the critical Log4Shell remote code execution exploit — the same vulnerability that affected millions of services in 2021. It remains unpatched here, leaving the entire payment platform open to a known attack vector.', annual_cost:240000, fix_weeks:3 },
+          { id:'P4', severity:'high', type:'PaymentController Does Everything', description:'One Java class handles all 15 payment methods in 4,500 lines of code. No part of payment processing can be changed without risking a break in another. Adding Apple Pay or Google Wallet means modifying this class — a change that currently takes 3x longer than it should due to regression risk.', annual_cost:200000, fix_weeks:5 },
+          { id:'P5', severity:'high', type:'89 Dead Feature Flags Running on Every Payment', description:'89 feature flags from finished A/B experiments are still loaded and evaluated on every single payment request — adding latency and confusion for no benefit. When LinkedIn cleaned up a similar backlog, they saw an immediate 15% performance improvement.', annual_cost:150000, fix_weeks:2 },
+          { id:'P6', severity:'medium', type:'Four Payment Providers, Four Different Patterns', description:'Each payment provider was integrated by a different team using a different approach. The Amazon Pay integration has been sitting at 45% completion for 8 months. Adding any new payment method currently requires reworking the entire integration layer from scratch.', annual_cost:120000, fix_weeks:4 },
+          { id:'P7', severity:'medium', type:'800-Line Deploy Script With No Safety Net', description:'The platform is deployed via a single shell script with no error handling, no rollback, and no validation. One in every five deployments fails and requires manual intervention to recover. Knight Capital lost $440M in 45 minutes in 2012 from a deploy script with exactly this problem.', annual_cost:100000, fix_weeks:3 },
+          { id:'P8', severity:'medium', type:'Critical Knowledge Exists Only in Two People\'s Heads', description:'The README says "See John for questions." John left in 2021. How the payment routing logic works is known to exactly two engineers. Onboarding a new team member currently takes 4 weeks instead of 1 week, and a single resignation could leave the team unable to safely change core payment logic.', annual_cost:80000, fix_weeks:2 },
+        ]
+      },
+    },
+    nego: {
+      optA_items: [
+        'Apple Pay & Google Wallet blocked — PaymentController too fragile to modify safely',
+        'Log4Shell vulnerability unpatched — platform open to known remote code execution',
+        'Checkout failures stay at 3.2% — $340K/month in abandoned carts continues',
+        'PCI-DSS audit approaching — hardcoded API keys likely to fail compliance check',
+        'Deploy failures at 20% rate — engineers lose 1 day per week to rollback drills',
+      ],
+      optB_items: [
+        'Apple Pay & Google Wallet ship cleanly — PaymentController split into safe modules',
+        'Log4Shell patched — platform protected before Q2 PCI-DSS audit',
+        'Checkout failure rate drops — dead feature flags and config sprawl eliminated',
+        'PCI-DSS compliance met — hardcoded keys removed, secrets in vault',
+        'Deploys safe and fast — script replaced with validated, rollback-capable pipeline',
+      ],
+      dashFinalTitle: 'Refactor Payment Platform First',
+      dashNote: 'The God Commons Library and unpatched Log4Shell are directly blocking all JIRA features. Building on current infrastructure = 65% regression risk and a pending PCI-DSS audit failure. Refactoring enables safe modular changes, compliance, and reliable deployments —',
+    },
   },
-  'feature-store-service': {
-    name: 'feature-store-service',
-    description: 'Centralized ML feature storage and serving',
-    language: 'Python / Redis / Spark',
-    files: 62, stars: 21, lastCommit: '8 days ago',
-    debts: [
-      { id:'D9', severity:'high', type:'Test Results Don\'t Match Production', description:'The data the model is trained and tested on is calculated differently from the data it sees when running live. This mismatch causes an 8% accuracy gap between what the team sees in testing and what actually happens in production — giving false confidence before launch.', annual_cost:290000, fix_weeks:5 },
-      { id:'D10', severity:'medium', type:'No Audit Trail for Model Inputs', description:'Nobody tracks which data inputs each model version relies on. When something changes upstream, the impact on models is invisible until a failure occurs in production. The compliance team cannot produce an audit trail, which is currently blocking regulatory approval.', annual_cost:140000, fix_weeks:2 },
-    ]
-  },
+
 };
 
-// All debts flat
-const ALL_DEBTS = Object.values(REPO_DATA).flatMap(r => r.debts);
 
 // ── Stepper ───────────────────────────────────────────────────────────────
 const STEPS = [
@@ -372,30 +437,44 @@ function LogPanel({logs}) {
 }
 
 // ── Phase 1: JIRA Backlog ─────────────────────────────────────────────────
-const JIRA_PROJECT = {
-  name: 'Fraud Detection ML Platform',
-  key: 'ML',
-  id: 'ML-1401',
-  backlogUrl: 'https://pnp16.atlassian.net/jira/software/projects/ML/boards/backlog',
-  boardUrl:   'https://pnp16.atlassian.net/jira/software/projects/ML/boards',
-};
-
-function jiraIssueUrl(key) {
-  return `https://pnp16.atlassian.net/jira/software/projects/ML/issues/${key}`;
+function jiraIssueUrl(key, projectKey) {
+  return `https://pnp16.atlassian.net/jira/software/projects/${projectKey}/issues/${key}`;
 }
 
-function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
-  const [jiraUrl, setJiraUrl] = React.useState(JIRA_PROJECT.backlogUrl);
+function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct, onProductChange, jiraItems, project}) {
+  const [jiraUrl, setJiraUrl] = React.useState(project.backlogUrl);
+  React.useEffect(()=>{ setJiraUrl(project.backlogUrl); }, [project.backlogUrl]);
 
   return (
     <div className="fade-in">
-      <div className="phase-header" style={{flexDirection:'column',alignItems:'stretch',gap:14,padding:'18px 20px'}}>
 
+      {/* Product selector */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+        {Object.entries(PRODUCTS_DATA).map(([id, p])=>(
+          <div key={id}
+            onClick={()=>{ if(id!==activeProduct) onProductChange(id); }}
+            style={{
+              padding:'12px 16px', cursor:'pointer', transition:'all .2s',
+              border: id===activeProduct ? '2px solid var(--accent)' : '2px solid var(--border)',
+              background: id===activeProduct ? 'rgba(255,107,53,.08)' : 'var(--panel)',
+              display:'flex', alignItems:'center', gap:12,
+            }}>
+            <div style={{fontSize:24,flexShrink:0}}>{p.icon}</div>
+            <div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:14,color: id===activeProduct?'var(--accent)':'var(--text)'}}>{p.label}</div>
+              <div style={{fontSize:'10px',color:'var(--dim)',marginTop:2}}>{p.description}</div>
+            </div>
+            {id===activeProduct && <span className="badge badge-live" style={{marginLeft:'auto',flexShrink:0}}>ACTIVE</span>}
+          </div>
+        ))}
+      </div>
+
+      <div className="phase-header" style={{flexDirection:'column',alignItems:'stretch',gap:14,padding:'18px 20px'}}>
         {/* Top row: icon + title + button */}
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div className="phase-icon" style={{fontSize:24}}>🎫</div>
           <div style={{flex:1}}>
-            <div className="phase-title" style={{fontSize:20}}>{JIRA_PROJECT.id} — {JIRA_PROJECT.name}</div>
+            <div className="phase-title" style={{fontSize:20}}>{project.id} — {project.name}</div>
             <div className="phase-sub" style={{marginTop:3}}>
               Roadmap backlog — tech debt blockers flagged by engineering. Paste your own JIRA backlog URL below, then click Load.
             </div>
@@ -428,16 +507,15 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
             Open ↗
           </a>
         </div>
-
       </div>
 
       {logs.length > 0 && (
         <div className="fade-in">
           <div style={{marginBottom:8,fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
-            {JIRA_ITEMS.length} blocker items · Click a ticket to trace its repository
+            {jiraItems.length} blocker items · Click a ticket to trace its repository
           </div>
           <div className="jira-grid">
-            {JIRA_ITEMS.map(item=>(
+            {jiraItems.map(item=>(
               <div key={item.key}
                 className={`jira-card priority-${item.priority} ${selectedItem?.key===item.key?'selected':''}`}
                 onClick={()=>onSelect(item)}>
@@ -447,7 +525,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
                 </div>
                 <div className="jira-title">{item.title}</div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
-                  <a href={jiraIssueUrl(item.key)} target="_blank" rel="noopener noreferrer"
+                  <a href={jiraIssueUrl(item.key, project.key)} target="_blank" rel="noopener noreferrer"
                     style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
                     onClick={e=>e.stopPropagation()}>
                     🔗 Open ticket
@@ -464,8 +542,8 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
 }
 
 // ── Phase 2: Repository ───────────────────────────────────────────────────
-function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
-  const repo = REPO_DATA[repoName];
+function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}) {
+  const repo = repoData[repoName];
   return (
     <div className="fade-in">
       <div className="card" style={{marginBottom:14}}>
@@ -489,7 +567,7 @@ function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
           </div>
           <div style={{marginTop:12}}>
             <label className="input-label">Repository URL</label>
-            <input className="input-field" readOnly value={`https://github.com/ml-platform/${repoName}`}/>
+            <input className="input-field" readOnly value={`https://github.com/your-org/${repoName}`}/>
           </div>
         </div>
       </div>
@@ -590,7 +668,7 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
 }
 
 // ── Phase 5: Negotiation ──────────────────────────────────────────────────
-function PhaseNego({negotiation, costData, onDashboard}) {
+function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
   return (
     <div className="fade-in">
       <div className="phase-header">
@@ -616,11 +694,7 @@ function PhaseNego({negotiation, costData, onDashboard}) {
           ))}
           <div style={{marginTop:12,fontSize:'11px',color:'var(--red)',lineHeight:1.9}}>
             <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT HAPPENS NEXT</div>
-            <div>✗ Fraud alerts stay delayed 5+ min — batch pipeline blocks real-time</div>
-            <div>✗ Model accuracy stuck at 67% and falling every week</div>
-            <div>✗ Touching any data rule risks silent bugs across 12 files</div>
-            <div>✗ Regulators reject compliance dashboard — decisions unexplainable</div>
-            <div>✗ Bad deploys still mean 4h outage — no rollback exists</div>
+            {nego.optA_items.map((item,i)=><div key={i}>✗ {item}</div>)}
             <div>✗ {fmt(costData.annual_savings)}/yr in debt costs keep compounding</div>
           </div>
         </div>
@@ -641,19 +715,15 @@ function PhaseNego({negotiation, costData, onDashboard}) {
           ))}
           <div style={{marginTop:12,fontSize:'11px',color:'var(--green)',lineHeight:1.9}}>
             <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT YOU UNLOCK</div>
-            <div>✓ Fraud alerts under 1 second — real-time pipeline replaces batch</div>
-            <div>✓ Model accuracy back to 94%+ with automated weekly retraining</div>
-            <div>✓ Data rules safe to change — documented, centralised, tested</div>
-            <div>✓ Every decision explainable — ML-1404 compliance unblocked</div>
-            <div>✓ One-click rollback — no more 4h outages from bad deploys</div>
-            <div>✓ {fmt(costData.annual_savings)}/yr saved — all 5 features ship cleanly</div>
+            {nego.optB_items.map((item,i)=><div key={i}>✓ {item}</div>)}
+            <div>✓ {fmt(costData.annual_savings)}/yr saved — all {jiraCount} features ship cleanly</div>
           </div>
         </div>
       </div>
 
       <div className="rec-box" style={{marginBottom:14}}>
         <div className="rec-label">✓ AGENT RECOMMENDATION</div>
-        <div className="rec-title">Refactor First — Then Ship All 5 Features</div>
+        <div className="rec-title">Refactor First — Then Ship All {jiraCount} Features</div>
         <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
 
         {/* Tradeoff grid */}
@@ -689,14 +759,14 @@ function PhaseNego({negotiation, costData, onDashboard}) {
 }
 
 // ── Phase 6: Final Dashboard ──────────────────────────────────────────────
-function PhaseDashboard({costData, negotiation, selectedDebts, allDebts}) {
+function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, jiraItems}) {
   const debts = allDebts.filter(d=>selectedDebts.includes(d.id));
   return (
     <div className="fade-in">
       <div className="phase-header" style={{borderLeftColor:'var(--green)'}}>
         <div className="phase-icon">📊</div>
         <div>
-          <div className="phase-title">Final Dashboard — ML Platform Tech Debt Report</div>
+          <div className="phase-title">Final Dashboard — Tech Debt Report</div>
           <div className="phase-sub">Complete analysis ready to share with your PM, CTO, or engineering board.</div>
         </div>
         <span className="badge badge-live" style={{marginLeft:'auto'}}>ANALYSIS COMPLETE</span>
@@ -708,7 +778,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts}) {
           {label:'Refactoring Investment',val:fmt(costData.refactoring_cost),cls:'amber',sub:`${costData.effort_weeks} weeks`},
           {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'green',sub:'then saves forever'},
           {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:'green',sub:'return on investment'},
-          {label:'Features Unblocked',val:'5/5',cls:'blue',sub:'JIRA ML-1401 → ML-1405'},
+          {label:'Features Unblocked',val:`${jiraItems.length}/${jiraItems.length}`,cls:'blue',sub:`All ${jiraItems.length} JIRA features`},
         ].map((k,i)=>(
           <div key={i} className="final-kpi">
             <div className="kpi-label">{k.label}</div>
@@ -720,12 +790,10 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts}) {
 
       <div className="rec-box" style={{marginBottom:14}}>
         <div className="rec-label">✓ FINAL RECOMMENDATION</div>
-        <div className="rec-title">Refactor ML Infrastructure First — Ship All 5 Features by Week 16</div>
+        <div className="rec-title">{nego.dashFinalTitle} — Ship All {jiraItems.length} Features by Week 16</div>
         <div className="rec-body">
-          The ML platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
-          The monolithic batch pipeline and 15-month-old training data are directly blocking 4 of 5 JIRA features.
-          Building on current infrastructure = 65% regression risk + $23K/month compounding.
-          Refactoring (12 weeks) enables real-time inference, auto-retraining, and XAI compliance — with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
+          This platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
+          {' '}{nego.dashNote} with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
         </div>
       </div>
 
@@ -764,6 +832,14 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [phase, setPhase] = useState('jira'); // jira | repo | debt | cost | nego | dashboard
 
+  // Product selection
+  const [activeProduct, setActiveProduct] = useState('fraud-detection');
+  const product = PRODUCTS_DATA[activeProduct];
+  const activeJiraItems = product.jiraItems;
+  const activeRepoData = product.repoData;
+  const activeProject = product.project;
+  const ALL_DEBTS = Object.values(activeRepoData).flatMap(r => r.debts);
+
   // Jira
   const [jiraLoading, setJiraLoading] = useState(false);
   const [jiraLoaded, setJiraLoaded] = useState(false);
@@ -784,6 +860,18 @@ function App() {
 
   const addLog = useCallback((msg, type='info') => setLogs(l=>[...l,{msg,type}]), []);
 
+  const onProductChange = (productId) => {
+    setActiveProduct(productId);
+    setPhase('jira');
+    setSelectedJira(null);
+    setJiraLoaded(false);
+    setScanned(false);
+    setSelectedDebts([]);
+    setCostData(null);
+    setNegotiation(null);
+    setLogs([]);
+  };
+
   // Compute cost live based on selected debts
   const computeCost = (ids) => {
     const items = ALL_DEBTS.filter(d=>ids.includes(d.id));
@@ -799,17 +887,17 @@ function App() {
   // Load JIRA
   const loadJira = async () => {
     setJiraLoading(true);
-    addLog('▶ Connecting to JIRA Cloud (ml-platform.atlassian.net)…','info');
+    addLog(`▶ Connecting to JIRA Cloud (${activeProject.backlogUrl.split('/')[2]})…`,'info');
     await wait(600);
     addLog('  ✓ Authenticated via OAuth token','ok');
     await wait(400);
-    addLog('  🔍 Querying backlog: project=ML AND labels=tech-debt AND priority IN (Critical,High,Medium)','info');
+    addLog(`  🔍 Querying backlog: project=${activeProject.key} AND labels=tech-debt AND priority IN (Critical,High,Medium)`,'info');
     await wait(700);
-    addLog(`  ✓ Found ${JIRA_ITEMS.length} blocker items linked to tech debt tracker`,'ok');
-    JIRA_ITEMS.forEach((item,i)=>{
+    addLog(`  ✓ Found ${activeJiraItems.length} blocker items linked to tech debt tracker`,'ok');
+    activeJiraItems.forEach((item,i)=>{
       setTimeout(()=>addLog(`    ${item.key}: ${item.title} [${item.priority}]`,'dim'),i*120);
     });
-    await wait(JIRA_ITEMS.length*120+300);
+    await wait(activeJiraItems.length*120+300);
     addLog('✓ JIRA backlog loaded — click an item to trace its repository','ok');
     setJiraLoaded(true);
     setJiraLoading(false);
@@ -823,7 +911,7 @@ function App() {
     addLog(`  ✓ Repository linked: ${item.repo}`,'ok');
     addLog(`  📦 Cloning metadata for ${item.repo}…`,'info');
     await wait(300);
-    addLog(`  ✓ ${REPO_DATA[item.repo]?.files} files indexed`,'ok');
+    addLog(`  ✓ ${activeRepoData[item.repo]?.files} files indexed`,'ok');
     setPhase('repo');
     setScanned(false);
     setSelectedDebts([]);
@@ -833,11 +921,11 @@ function App() {
 
   const scanRepo = async () => {
     setScanning(true);
-    const repo = REPO_DATA[selectedJira.repo];
+    const repo = activeRepoData[selectedJira.repo];
     addLog(`──────────────────────────────────`,'dim');
     addLog(`▶ Scanning ${selectedJira.repo} for tech debt…`,'info');
     await wait(500);
-    addLog(`  🤖 Claude analyzing ${repo.files} Python files…`,'info');
+    addLog(`  🤖 Claude analyzing ${repo.files} files…`,'info');
     await wait(800);
     addLog(`  🔍 Pattern detection: god classes, batch pipelines, missing registries…`,'info');
     await wait(600);
@@ -883,10 +971,10 @@ function App() {
     addLog(`──────────────────────────────────`,'dim');
     addLog(`▶ Running Negotiation Agent (Claude)…`,'info');
     await wait(600);
-    addLog(`  ⚖️  Cross-referencing ${selectedDebts.length} debt items vs. ${JIRA_ITEMS.length} JIRA tickets…`,'info');
+    addLog(`  ⚖️  Cross-referencing ${selectedDebts.length} debt items vs. ${activeJiraItems.length} JIRA tickets…`,'info');
     await wait(700);
-    const blocked = JIRA_ITEMS.filter(t=>t.repo===selectedJira?.repo||t.priority==='critical');
-    addLog(`  🚫 ${blocked.length}/${JIRA_ITEMS.length} features blocked or critically slowed by debt`,'warn');
+    const blocked = activeJiraItems.filter(t=>t.repo===selectedJira?.repo||t.priority==='critical');
+    addLog(`  🚫 ${blocked.length}/${activeJiraItems.length} features blocked or critically slowed by debt`,'warn');
     await wait(500);
     addLog(`  🎯 Option A (Build Now): 16w, 35% success, $23K/mo ongoing`,'warn');
     await wait(400);
@@ -895,7 +983,7 @@ function App() {
     addLog(`  ✓ RECOMMENDATION: REFACTOR FIRST`,'ok');
     const nego = {
       recommendation:'refactor_first',
-      reason:`${blocked.length} of ${JIRA_ITEMS.length} features are blocked by the ML platform's monolithic batch pipeline and stale training data. Building now carries 65% regression risk plus $23K/month compounding maintenance. Refactoring (${costData.effort_weeks} weeks) enables all features at 92% confidence — and breaks even at Week ${costData.break_even_weeks}, generating ${fmt(costData.annual_savings)}/year thereafter.`,
+      reason:`${blocked.length} of ${activeJiraItems.length} features are blocked by critical debt in ${product.label}. Building now carries 65% regression risk plus $23K/month compounding maintenance. Refactoring (${costData.effort_weeks} weeks) enables all features at 92% confidence — and breaks even at Week ${costData.break_even_weeks}, generating ${fmt(costData.annual_savings)}/year thereafter.`,
     };
     setNegotiation(nego);
     setNegotiating(false);
@@ -903,7 +991,7 @@ function App() {
     addLog(`✓ Negotiation complete — recommendation ready`,'ok');
   };
 
-  const activeRepo = selectedJira ? REPO_DATA[selectedJira.repo] : null;
+  const activeRepo = selectedJira ? activeRepoData[selectedJira.repo] : null;
   const activeDebts = activeRepo ? activeRepo.debts : [];
 
   const phaseLabel = {
@@ -929,12 +1017,12 @@ function App() {
 
       <div className="body-layout">
         <div className="main-area">
-          {phase==='jira' && <PhaseJira onSelect={selectJira} selectedItem={selectedJira} logs={logs} running={jiraLoading} onLoad={loadJira}/>}
-          {phase==='repo' && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} onScan={scanRepo} scanning={scanning} scanned={scanned}/>}
+          {phase==='jira' && <PhaseJira onSelect={selectJira} selectedItem={selectedJira} logs={logs} running={jiraLoading} onLoad={loadJira} activeProduct={activeProduct} onProductChange={onProductChange} jiraItems={activeJiraItems} project={activeProject}/>}
+          {phase==='repo' && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} repoData={activeRepoData} onScan={scanRepo} scanning={scanning} scanned={scanned}/>}
           {phase==='debt' && <PhaseDebt debts={activeDebts} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData}/>}
           {phase==='cost' && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={activeDebts} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation}/>}
-          {phase==='nego' && <PhaseNego negotiation={negotiation} costData={costData} onDashboard={()=>setPhase('dashboard')}/>}
-          {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS}/>}
+          {phase==='nego' && <PhaseNego negotiation={negotiation} costData={costData} nego={product.nego} jiraCount={activeJiraItems.length} onDashboard={()=>setPhase('dashboard')}/>}
+          {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} nego={product.nego} jiraItems={activeJiraItems}/>}
         </div>
 
         <LogPanel logs={logs}/>
