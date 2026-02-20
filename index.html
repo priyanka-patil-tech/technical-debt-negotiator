@@ -303,26 +303,69 @@ function LogPanel({logs}) {
 }
 
 // ── Phase 1: JIRA Backlog ─────────────────────────────────────────────────
+const JIRA_PROJECT = {
+  name: 'Fraud Detection ML Platform',
+  key: 'ML',
+  id: 'ML-1401',
+  backlogUrl: 'https://pnp16.atlassian.net/jira/software/projects/ML/boards/backlog',
+  boardUrl:   'https://pnp16.atlassian.net/jira/software/projects/ML/boards',
+};
+
+function jiraIssueUrl(key) {
+  return `https://pnp16.atlassian.net/jira/software/projects/ML/issues/${key}`;
+}
+
 function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
+  const [jiraUrl, setJiraUrl] = React.useState(JIRA_PROJECT.backlogUrl);
+
   return (
     <div className="fade-in">
-      <div className="phase-header">
-        <div className="phase-icon">🎫</div>
-        <div>
-          <div className="phase-title">JIRA Backlog — ML Platform</div>
-          <div className="phase-sub">Blocked tech debt items from your sprint backlog. Click an item to trace its repository dependencies.</div>
+      <div className="phase-header" style={{flexDirection:'column',alignItems:'stretch',gap:14,padding:'18px 20px'}}>
+
+        {/* Top row: icon + title + button */}
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div className="phase-icon" style={{fontSize:24}}>🎫</div>
+          <div style={{flex:1}}>
+            <div className="phase-title" style={{fontSize:20}}>{JIRA_PROJECT.id} — {JIRA_PROJECT.name}</div>
+            <div className="phase-sub" style={{marginTop:3}}>
+              Roadmap backlog — tech debt blockers flagged by engineering. Paste your own JIRA backlog URL below, then click Load.
+            </div>
+          </div>
+          {!logs.length && (
+            <button className="btn btn-primary" style={{flexShrink:0}} onClick={onLoad} disabled={running}>
+              {running ? <><span className="spin">⟳</span> Loading…</> : '▶ Load JIRA Backlog'}
+            </button>
+          )}
         </div>
-        {!logs.length && (
-          <button className="btn btn-primary" style={{marginLeft:'auto'}} onClick={onLoad} disabled={running}>
-            {running ? <><span className="spin">⟳</span> Loading…</> : '▶ Load JIRA Backlog'}
-          </button>
-        )}
+
+        {/* JIRA URL input row */}
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)',whiteSpace:'nowrap',letterSpacing:'.06em'}}>
+            JIRA BACKLOG URL
+          </span>
+          <div style={{flex:1,position:'relative'}}>
+            <input
+              className="input-field"
+              value={jiraUrl}
+              onChange={e=>setJiraUrl(e.target.value)}
+              spellCheck={false}
+              style={{paddingLeft:28,fontSize:'11px',letterSpacing:'.02em'}}
+            />
+            <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:'11px',pointerEvents:'none'}}>🔗</span>
+          </div>
+          <a href={jiraUrl} target="_blank" rel="noopener noreferrer"
+            style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--blue)',textDecoration:'none',
+                    padding:'7px 12px',border:'1px solid rgba(30,144,255,.35)',whiteSpace:'nowrap',flexShrink:0}}>
+            Open ↗
+          </a>
+        </div>
+
       </div>
 
       {logs.length > 0 && (
         <div className="fade-in">
           <div style={{marginBottom:8,fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
-            {JIRA_ITEMS.length} blocker items · Click to trace repository
+            {JIRA_ITEMS.length} blocker items · Click a ticket to trace its repository
           </div>
           {JIRA_ITEMS.map(item=>(
             <div key={item.key}
@@ -332,9 +375,16 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
                 <div className="jira-key">{item.key}</div>
                 <span className={`jira-priority priority-${item.priority}`}>{item.priority}</span>
               </div>
-              <div>
+              <div style={{flex:1}}>
                 <div className="jira-title">{item.title}</div>
                 <div className="jira-meta">{item.summary}</div>
+                <div style={{marginTop:3}}>
+                  <a href={jiraIssueUrl(item.key)} target="_blank" rel="noopener noreferrer"
+                    style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
+                    onClick={e=>e.stopPropagation()}>
+                    🔗 {jiraIssueUrl(item.key)}
+                  </a>
+                </div>
               </div>
               <div style={{marginLeft:'auto',fontSize:'9px',fontFamily:"'Space Mono',monospace",color:'var(--dim)',whiteSpace:'nowrap'}}>{item.points}pts</div>
             </div>
