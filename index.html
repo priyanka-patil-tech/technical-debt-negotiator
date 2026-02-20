@@ -601,8 +601,32 @@ function PhaseNego({negotiation, costData, onDashboard}) {
 
       <div className="rec-box" style={{marginBottom:14}}>
         <div className="rec-label">✓ AGENT RECOMMENDATION</div>
-        <div className="rec-title">{negotiation.recommendation==='refactor_first'?'Refactor First — Then Ship All 5 Features':'Build With Caution'}</div>
-        <div className="rec-body">{negotiation.reason}</div>
+        <div className="rec-title">Refactor First — Then Ship All 5 Features</div>
+        <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
+
+        {/* Tradeoff grid */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:'rgba(255,255,255,.06)',marginBottom:14}}>
+          {[
+            {label:'Success rate gap',val:'35% → 92%',note:'+57 points in your favour',cls:'green'},
+            {label:'Total timeline',val:'Same — 16 weeks',note:'Refactor path is not slower',cls:'blue'},
+            {label:'If Option A fails',val:'Refactor anyway',note:`Both paths combined = ${costData.effort_weeks+16}w & double the cost`,cls:'red'},
+            {label:'First-year net gain',val:fmt(costData.annual_savings - costData.refactoring_cost),note:`after paying back the ${fmt(costData.refactoring_cost)} investment`,cls:'green'},
+          ].map((t,i)=>(
+            <div key={i} style={{padding:'10px 14px',background:'var(--ink)'}}>
+              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:3,letterSpacing:'.06em'}}>{t.label.toUpperCase()}</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'15px',color:`var(--${t.cls})`}}>{t.val}</div>
+              <div style={{fontSize:'10px',color:'var(--dim)',marginTop:2}}>{t.note}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Confidence signal */}
+        <div style={{padding:'10px 14px',border:'1px solid rgba(46,213,115,.2)',background:'rgba(46,213,115,.04)'}}>
+          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',letterSpacing:'.08em',marginBottom:4}}>WHY THIS IS A CLEAR CALL, NOT A CLOSE CALL</div>
+          <div style={{fontSize:'11px',color:'var(--soft)',lineHeight:1.7}}>
+            The gap between Option A (35%) and Option B (92%) is <strong style={{color:'var(--text)'}}>57 percentage points</strong> — well above the 15-point threshold where the choice becomes a judgement call. The timelines are identical at 16 weeks, meaning there is no speed advantage to building now. The only scenario where Option A wins is if all debt is low-severity and the team has high confidence the workarounds will hold — which is not the case here.
+          </div>
+        </div>
       </div>
 
       <button className="btn btn-success btn-block" onClick={onDashboard}>
