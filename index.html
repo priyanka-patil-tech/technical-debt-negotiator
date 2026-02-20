@@ -711,7 +711,9 @@ function App() {
     const critical_count = items.filter(d=>d.severity==='critical').length;
     const high_count    = items.filter(d=>d.severity==='high').length;
     const medium_count  = items.filter(d=>d.severity==='medium').length;
-    const prod_risk = Math.min(95, 15 + critical_count*15 + high_count*8 + medium_count*3);
+    // Risk = how dangerous it is to ship NOW without fixing selected debts
+    // Starts high (90%) and drops as more/critical issues are selected for fixing
+    const prod_risk = Math.max(10, 90 - critical_count*15 - high_count*8 - medium_count*3);
     return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length, prod_risk };
   };
 
