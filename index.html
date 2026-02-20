@@ -518,7 +518,7 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
           {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'blue',sub:'Then saves forever'},
           {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:costData.roi_pct>0?'green':'red',sub:'Return on investment'},
           {label:'Critical Issues',val:costData.critical_count,cls:'red',sub:`${costData.total_count} total selected`},
-          {label:'Prod Risk (Build Now)',val:'65%',cls:'red',sub:'Regression probability'},
+          {label:'Risk of Shipping Now',val:`${costData.prod_risk}%`,cls:costData.prod_risk>=60?'red':costData.prod_risk>=35?'amber':'green',sub:'chance something breaks in production'},
         ].map((k,i)=>(
           <div key={i} className="kpi-box">
             <div className="kpi-label">{k.label}</div>
@@ -709,7 +709,10 @@ function App() {
     const break_even_weeks = annual_savings > 0 ? Math.ceil(refactoring_cost/(annual_savings/52)) : 0;
     const roi_pct = annual_savings > 0 ? Math.round(((annual_savings-refactoring_cost)/refactoring_cost)*100) : 0;
     const critical_count = items.filter(d=>d.severity==='critical').length;
-    return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length };
+    const high_count    = items.filter(d=>d.severity==='high').length;
+    const medium_count  = items.filter(d=>d.severity==='medium').length;
+    const prod_risk = Math.min(95, 15 + critical_count*15 + high_count*8 + medium_count*3);
+    return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length, prod_risk };
   };
 
   // Load JIRA
