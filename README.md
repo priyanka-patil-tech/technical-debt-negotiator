@@ -31,10 +31,10 @@ open dashboard/index.html
 The agent runs 5 sub-agents in sequence:
 
 ```
-Repo Scanner  →  Jira Fetcher  →  Debt Analyzer (LLM)  →  Cost Model (LLM)  →  Negotiator (LLM)
+Jira Fetcher  →  Repo Scanner  →  Debt Analyzer (LLM)  →  Cost Model (LLM)  →  Negotiator (LLM)
      │                │                    │                       │                     │
-  Reads all       Fetches Jira         Identifies 18+         Translates to         Recommends:
-  repo files       backlog             debt patterns           dollar costs        Refactor or Build?
+  Fetches Jira     Reads all           Identifies 18+         Translates to         Recommends:
+   backlog         repo files          debt patterns           dollar costs        Refactor or Build?
 ```
 
 **Inputs:**
