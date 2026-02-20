@@ -498,13 +498,15 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
 
 // ── Phase 4: Cost Preview (Live) ──────────────────────────────────────────
 function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation}) {
+  const ref = useRef(null);
+  useEffect(()=>{ if(ref.current) ref.current.scrollIntoView({behavior:'smooth', block:'start'}); }, []);
   return (
-    <div className="fade-in">
+    <div className="fade-in" ref={ref}>
       <div className="phase-header">
         <div className="phase-icon">💰</div>
         <div>
-          <div className="phase-title">Refactoring Economics</div>
-          <div className="phase-sub">Live calculation based on selected debt items. Numbers update on selection change.</div>
+          <div className="phase-title">What Does Fixing This Actually Cost?</div>
+          <div className="phase-sub">Based on the issues selected above — how much to fix them, how much they save, and when you break even.</div>
         </div>
       </div>
 
