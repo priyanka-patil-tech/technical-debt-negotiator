@@ -562,10 +562,14 @@ function PhaseNego({negotiation, costData, onDashboard}) {
               <span className="nego-stat-val" style={{color:i===1||i===2?'var(--red)':undefined}}>{v}</span>
             </div>
           ))}
-          <div style={{marginTop:10,fontSize:'10px',color:'var(--red)'}}>
-            {['65% regression on fragile ML pipeline','Real-time inference remains blocked','15-month-old training data degrades accuracy','$276K/yr in mounting maintenance'].map((r,i)=>(
-              <div key={i} style={{marginBottom:3}}>✗ {r}</div>
-            ))}
+          <div style={{marginTop:12,fontSize:'11px',color:'var(--red)',lineHeight:1.7}}>
+            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT HAPPENS NEXT</div>
+            <div style={{marginBottom:5}}>✗ Fraud alerts still delayed 5+ minutes — the batch-only pipeline cannot serve real-time requests no matter how the feature is written on top of it</div>
+            <div style={{marginBottom:5}}>✗ The model is 15 months out of date and getting worse — every week without retraining means more missed fraud patterns and more losses</div>
+            <div style={{marginBottom:5}}>✗ Any change to data rules risks a cascade of silent bugs — 47 hardcoded transformations across 12 files, no documentation, no tests</div>
+            <div style={{marginBottom:5}}>✗ Engineers cannot explain a single flagged transaction — regulators will reject the compliance dashboard before it ships</div>
+            <div style={{marginBottom:5}}>✗ A bad model update still means 4 hours of downtime to roll back — no versioning, no safety net, same risk as today</div>
+            <div>✗ {fmt(costData.annual_savings)}/yr in debt costs keep compounding with no end in sight</div>
           </div>
         </div>
 
@@ -583,10 +587,14 @@ function PhaseNego({negotiation, costData, onDashboard}) {
               <span className="nego-stat-val" style={{color:i===3||i===4?'var(--green)':undefined}}>{v}</span>
             </div>
           ))}
-          <div style={{marginTop:10,fontSize:'10px',color:'var(--green)'}}>
-            {[`All 5 JIRA features unblocked`,`Real-time inference <50ms enabled`,`Auto-retraining pipeline enabled`,`${fmt(costData.annual_savings)}/yr debt costs eliminated`].map((r,i)=>(
-              <div key={i} style={{marginBottom:3}}>✓ {r}</div>
-            ))}
+          <div style={{marginTop:12,fontSize:'11px',color:'var(--green)',lineHeight:1.7}}>
+            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT YOU UNLOCK</div>
+            <div style={{marginBottom:5}}>✓ Fraud alerts go live under 1 second — batch pipeline replaced with a real-time engine, unblocking ML-1401 completely</div>
+            <div style={{marginBottom:5}}>✓ Model accuracy recovers from 67% to 94%+ — automated retraining on fresh data means the model keeps up with new scam patterns week by week</div>
+            <div style={{marginBottom:5}}>✓ Engineers can safely change any data rule — all 47 transformations documented, centralised, and tested before a single feature is built</div>
+            <div style={{marginBottom:5}}>✓ Every flagged transaction can be explained to regulators — XAI compliance dashboard (ML-1404) becomes buildable on a clean foundation</div>
+            <div style={{marginBottom:5}}>✓ Bad model updates roll back in one click — versioned model registry means no more 4-hour outages from a failed deploy</div>
+            <div>✓ {fmt(costData.annual_savings)}/yr in debt costs eliminated — and all 5 JIRA features ship on a stable platform</div>
           </div>
         </div>
       </div>
