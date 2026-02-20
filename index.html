@@ -234,11 +234,11 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 
 // ── ML-focused JIRA data ──────────────────────────────────────────────────
 const JIRA_ITEMS = [
-  { key:'ML-1401', title:'Real-time Inference API — latency under 50ms', priority:'critical', repo:'ml-inference-engine', summary:'Feature serving layer blocked by monolithic batch pipeline', points:13 },
-  { key:'ML-1402', title:'Model Drift Detection & Auto-Retraining Pipeline', priority:'critical', repo:'training-orchestrator', summary:'Stale models (15mo old) causing 34% prediction errors', points:21 },
-  { key:'ML-1403', title:'Multi-tenant Feature Store Upgrade', priority:'high', repo:'feature-store-service', summary:'Feature drift causing inconsistent training/serving data', points:8 },
-  { key:'ML-1404', title:'Explainability Dashboard (XAI) for Compliance', priority:'high', repo:'ml-inference-engine', summary:'Black-box models blocking regulatory approval', points:13 },
-  { key:'ML-1405', title:'A/B Testing Framework for Model Experiments', priority:'medium', repo:'experiment-platform', summary:'Manual champion/challenger requires 3-week deploy cycles', points:5 },
+  { key:'ML-1401', title:'Fraud alerts take 5+ minutes — customers want instant notifications', priority:'critical', repo:'ml-inference-engine', summary:'Blocked: the system processes all transactions in a nightly batch instead of checking each one live', points:13 },
+  { key:'ML-1402', title:'Our fraud model is 15 months out of date — it is missing new scam patterns', priority:'critical', repo:'training-orchestrator', summary:'Blocked: no automated pipeline to retrain the model; accuracy has dropped from 94% to 67% as fraudsters adapted', points:21 },
+  { key:'ML-1403', title:'Predictions in testing look great but break in production — data mismatch', priority:'high', repo:'feature-store-service', summary:'Blocked: the data the model trains on is calculated differently from the data it sees at runtime, causing an 8% accuracy loss', points:8 },
+  { key:'ML-1404', title:'Regulators are asking why we flagged a transaction — we cannot explain it', priority:'high', repo:'ml-inference-engine', summary:'Blocked: the model is a black box with no audit trail; compliance approval is on hold until we can show our reasoning', points:13 },
+  { key:'ML-1405', title:'Testing a new fraud detection idea takes 3 weeks — needs to take hours', priority:'medium', repo:'experiment-platform', summary:'Blocked: there is no framework to run two models side-by-side; every experiment requires a full manual deploy cycle', points:5 },
 ];
 
 // ── Repository data ───────────────────────────────────────────────────────
@@ -249,11 +249,11 @@ const REPO_DATA = {
     language: 'Python / FastAPI',
     files: 147, stars: 89, lastCommit: '3 days ago',
     debts: [
-      { id:'D1', severity:'critical', type:'monolithic_batch_pipeline', description:'Single synchronous pipeline blocks real-time inference — all predictions batched every 5min', location:'src/pipeline/batch_runner.py:L1–L892', annual_cost:520000, fix_weeks:6, business_impact:'Real-time feature (ML-1401) completely blocked; competitors serving <50ms already' },
-      { id:'D2', severity:'critical', type:'missing_model_versioning', description:'No model registry or versioning — rollback requires manual file replacement and 4h downtime', location:'src/models/ (entire directory)', annual_cost:380000, fix_weeks:4, business_impact:'Every bad deploy risks 4h outage; 3 incidents in last 6 months = $120K lost revenue' },
-      { id:'D3', severity:'high', type:'god_class_predictor', description:'MLPredictor class handles loading, preprocessing, inference, postprocessing, caching and monitoring (6,200 lines)', location:'src/predictor/ml_predictor.py:L1–L6200', annual_cost:210000, fix_weeks:5, business_impact:'2 sprint delays per quarter; XAI compliance (ML-1404) requires clean separation' },
-      { id:'D4', severity:'high', type:'hardcoded_feature_engineering', description:'47 hardcoded feature transformations scattered across 12 files — updating any feature breaks 3 others', location:'src/features/*.py', annual_cost:175000, fix_weeks:3, business_impact:'Feature Store upgrade (ML-1403) impossible without full rewrite' },
-      { id:'D5', severity:'medium', type:'no_observability', description:'No model performance metrics, drift detection, or alerting — degradation discovered by end users', location:'src/monitoring/ (empty)', annual_cost:95000, fix_weeks:2, business_impact:'ML-1402 drift detection blocked; mean time to detect model failure = 11 days' },
+      { id:'D1', severity:'critical', type:'Batch-Only Pipeline', description:'Every fraud check joins a queue and is processed in bulk every 5 minutes. There is no way to check a single transaction the moment it happens — making real-time alerts impossible with the current setup.', annual_cost:520000, fix_weeks:6 },
+      { id:'D2', severity:'critical', type:'No Safe Rollback', description:'If a bad model update goes live, fixing it means engineers manually swapping files on the server — a process that takes 4 hours and causes a full outage. There is no one-click rollback. Three incidents in the last 6 months cost the business $120K.', annual_cost:380000, fix_weeks:4 },
+      { id:'D3', severity:'high', type:'One File Does Everything', description:'A single code file is responsible for 6,200 lines of logic covering loading models, cleaning data, running predictions, caching results, and monitoring — all tangled together. Nobody fully understands it, so any change carries high risk of breaking something else.', annual_cost:210000, fix_weeks:5 },
+      { id:'D4', severity:'high', type:'Hardcoded Business Rules', description:'47 data transformation rules are scattered across 12 different files with no documentation. Changing one rule unpredictably breaks three others. Adding a new data source or updating a rule requires a full investigation before touching anything.', annual_cost:175000, fix_weeks:3 },
+      { id:'D5', severity:'medium', type:'No Performance Monitoring', description:'There are no automatic checks on how well the fraud model is performing day-to-day. When accuracy drops, customers notice fraudulent transactions slipping through before the engineering team does. Average time to detect a model failure is 11 days.', annual_cost:95000, fix_weeks:2 },
     ]
   },
   'training-orchestrator': {
@@ -262,9 +262,9 @@ const REPO_DATA = {
     language: 'Python / Airflow',
     files: 89, stars: 34, lastCommit: '12 days ago',
     debts: [
-      { id:'D6', severity:'critical', type:'stale_training_data', description:'Training pipeline uses 15-month-old snapshot; no incremental learning or data freshness checks', location:'dags/training_dag.py:L45–L310', annual_cost:440000, fix_weeks:5, business_impact:'Models degrading — fraud detection accuracy dropped from 94% to 67% over 15 months' },
-      { id:'D7', severity:'high', type:'no_experiment_tracking', description:'MLflow not configured; experiments tracked in spreadsheets. No reproducibility for any model', location:'training/ (no tracking code)', annual_cost:185000, fix_weeks:3, business_impact:'A/B testing framework (ML-1405) requires proper experiment IDs; compliance audit failing' },
-      { id:'D8', severity:'medium', type:'single_gpu_bottleneck', description:'Training hardcoded to single GPU; distributed training disabled — large models take 72h to train', location:'training/trainer.py:L200–L450', annual_cost:120000, fix_weeks:4, business_impact:'Experiment velocity limited to 1 full retrain/week; team blocked from trying new architectures' },
+      { id:'D6', severity:'critical', type:'15-Month-Old Training Data', description:'The fraud model has not been retrained in 15 months. It has never seen any scam patterns that emerged in the past year. As a result, detection accuracy has fallen from 94% to 67% — meaning 1 in 3 fraud cases is now being missed.', annual_cost:440000, fix_weeks:5 },
+      { id:'D7', severity:'high', type:'Experiments Tracked in Spreadsheets', description:'There is no system to record what data, settings, or code produced each model. Past results cannot be reproduced. If regulators ask which inputs led to a decision, the team cannot answer. Every new experiment starts from scratch with no institutional memory.', annual_cost:185000, fix_weeks:3 },
+      { id:'D8', severity:'medium', type:'Training Limited to One Machine', description:'The model training process is locked to a single server and cannot be split across multiple machines. Training a large model takes up to 72 hours, limiting the team to one experiment per week and blocking engineers from trying new approaches quickly.', annual_cost:120000, fix_weeks:4 },
     ]
   },
   'feature-store-service': {
@@ -273,8 +273,8 @@ const REPO_DATA = {
     language: 'Python / Redis / Spark',
     files: 62, stars: 21, lastCommit: '8 days ago',
     debts: [
-      { id:'D9', severity:'high', type:'training_serving_skew', description:'Training features computed differently than serving features — 8% accuracy loss in production vs. test', location:'src/compute/offline_store.py & online_store.py', annual_cost:290000, fix_weeks:5, business_impact:'ML-1403 blocked; feature inconsistency root-cause of 34% prediction error rate' },
-      { id:'D10', severity:'medium', type:'no_feature_lineage', description:'No tracking of which features used in which model versions; breaking changes undetected until prod failure', location:'src/registry/ (missing)', annual_cost:140000, fix_weeks:2, business_impact:'Compliance team cannot produce feature audit trail; regulatory approval blocked' },
+      { id:'D9', severity:'high', type:'Test Results Don\'t Match Production', description:'The data the model is trained and tested on is calculated differently from the data it sees when running live. This mismatch causes an 8% accuracy gap between what the team sees in testing and what actually happens in production — giving false confidence before launch.', annual_cost:290000, fix_weeks:5 },
+      { id:'D10', severity:'medium', type:'No Audit Trail for Model Inputs', description:'Nobody tracks which data inputs each model version relies on. When something changes upstream, the impact on models is invisible until a failure occurs in production. The compliance team cannot produce an audit trail, which is currently blocking regulatory approval.', annual_cost:140000, fix_weeks:2 },
     ]
   },
 };
@@ -284,20 +284,33 @@ const ALL_DEBTS = Object.values(REPO_DATA).flatMap(r => r.debts);
 
 // ── Log panel ────────────────────────────────────────────────────────────
 function LogPanel({logs}) {
+  const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(()=>{ if(ref.current) ref.current.scrollTop = ref.current.scrollHeight; },[logs]);
   return (
-    <div className="log-panel">
-      <div className="log-panel-header">
-        <span>Agent Logs</span>
-        <span className="badge badge-live">{logs.length}</span>
+    <div className="log-panel" style={{width: open ? 300 : 36, transition:'width .25s ease', overflow:'hidden'}}>
+      <div className="log-panel-header" style={{cursor:'pointer', justifyContent:'center', padding:'10px 8px'}}
+        onClick={()=>setOpen(o=>!o)}>
+        {open ? (
+          <>
+            <span style={{flex:1}}>Agent Logs</span>
+            <span className="badge badge-live" style={{marginRight:6}}>{logs.length}</span>
+            <span style={{fontSize:11, color:'var(--dim)'}}>✕</span>
+          </>
+        ) : (
+          <span title="Show agent logs" style={{fontSize:14, writingMode:'vertical-rl', transform:'rotate(180deg)', color:'var(--dim)', letterSpacing:'.08em', fontFamily:"'Space Mono',monospace", fontSize:'9px', textTransform:'uppercase'}}>
+            Logs {logs.length > 0 ? `(${logs.length})` : ''}
+          </span>
+        )}
       </div>
-      <div className="log-panel-body" ref={ref}>
-        {logs.length === 0 && <div className="log-line log-dim">Waiting for activity…</div>}
-        {logs.map((l,i)=>(
-          <div key={i} className={`log-line log-${l.type}`}>{l.msg}</div>
-        ))}
-      </div>
+      {open && (
+        <div className="log-panel-body" ref={ref}>
+          {logs.length === 0 && <div className="log-line log-dim">Waiting for activity…</div>}
+          {logs.map((l,i)=>(
+            <div key={i} className={`log-line log-${l.type}`}>{l.msg}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -377,7 +390,6 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
               </div>
               <div style={{flex:1}}>
                 <div className="jira-title">{item.title}</div>
-                <div className="jira-meta">{item.summary}</div>
                 <div style={{marginTop:3}}>
                   <a href={jiraIssueUrl(item.key)} target="_blank" rel="noopener noreferrer"
                     style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
@@ -400,16 +412,13 @@ function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
   const repo = REPO_DATA[repoName];
   return (
     <div className="fade-in">
-      <div className="phase-header">
-        <div className="phase-icon">📁</div>
-        <div>
-          <div className="phase-title">Repository Linked</div>
-          <div className="phase-sub">Tracing <strong style={{color:'var(--accent)'}}>{selectedJira?.key}</strong> → repository dependency resolved</div>
-        </div>
-      </div>
-
       <div className="card" style={{marginBottom:14}}>
-        <div className="card-head"><span className="card-title">Linked Repository</span></div>
+        <div className="card-head" style={{padding:'14px 18px'}}>
+          <span style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:'var(--text)',letterSpacing:'.01em'}}>
+            📁 Linked Repository
+          </span>
+          <span className="badge badge-live" style={{marginLeft:'auto'}}>LOADED</span>
+        </div>
         <div className="card-body">
           <div className="repo-box">
             <div className="repo-icon">⚙️</div>
@@ -441,8 +450,10 @@ function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
 // ── Phase 3: Debt Items ───────────────────────────────────────────────────
 function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
   const total = debts.filter(d=>selected.includes(d.id)).reduce((s,d)=>s+d.annual_cost,0);
+  const ref = useRef(null);
+  useEffect(()=>{ if(ref.current) ref.current.scrollIntoView({behavior:'smooth', block:'start'}); }, []);
   return (
-    <div className="fade-in">
+    <div className="fade-in" ref={ref}>
       <div className="phase-header">
         <div className="phase-icon">🤖</div>
         <div>
@@ -462,13 +473,11 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
               checked={selected.includes(d.id)}
               onChange={()=>onToggle(d.id)}/>
             <div className="debt-info">
-              <div className="debt-type-tag" style={{marginBottom:2}}>
-                <span className={`debt-type-tag ${d.severity}`}>[{d.type.replace(/_/g,' ').toUpperCase()}]</span>
-                <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`} style={{marginLeft:6}}>{d.severity}</span>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span>
+                <span style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',fontWeight:700,color: d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)'}}>{d.type}</span>
               </div>
-              <div className="debt-desc">{d.description}</div>
-              <div className="debt-loc">📍 {d.location}</div>
-              {d.business_impact && <div style={{fontSize:'10px',color:'var(--dim)',fontStyle:'italic',marginTop:3}}>{d.business_impact}</div>}
+              <div style={{fontSize:'14px',color:'var(--text)',lineHeight:1.6}}>{d.description}</div>
             </div>
             <div className="debt-cost-tag">
               <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
