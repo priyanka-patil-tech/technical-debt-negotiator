@@ -518,7 +518,7 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
           {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'blue',sub:'Then saves forever'},
           {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:costData.roi_pct>0?'green':'red',sub:'Return on investment'},
           {label:'Critical Issues',val:costData.critical_count,cls:'red',sub:`${costData.total_count} total selected`},
-          {label:'Risk of Shipping Now',val:`${costData.prod_risk}%`,cls:costData.prod_risk>=60?'red':costData.prod_risk>=35?'amber':'green',sub:'chance something breaks in production'},
+          {label:'Unplanned Rework Ahead',val:`+${costData.overrun_weeks}w`,cls:costData.overrun_weeks>=8?'red':costData.overrun_weeks>=4?'amber':'green',sub:'extra weeks if shipped without fixes'},
         ].map((k,i)=>(
           <div key={i} className="kpi-box">
             <div className="kpi-label">{k.label}</div>
@@ -711,10 +711,10 @@ function App() {
     const critical_count = items.filter(d=>d.severity==='critical').length;
     const high_count    = items.filter(d=>d.severity==='high').length;
     const medium_count  = items.filter(d=>d.severity==='medium').length;
-    // Risk = how dangerous it is to ship NOW without fixing selected debts
-    // Starts high (90%) and drops as more/critical issues are selected for fixing
-    const prod_risk = Math.max(10, 90 - critical_count*15 - high_count*8 - medium_count*3);
-    return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length, prod_risk };
+    // Overrun = extra weeks of unplanned rework if shipped without fixing these debts.
+    // Starts at 14w (nothing fixed) and drops as more debts are selected for fixing.
+    const overrun_weeks = Math.max(0, 14 - critical_count*3 - high_count*1.5 - medium_count*0.5);
+    return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length, overrun_weeks };
   };
 
   // Load JIRA
