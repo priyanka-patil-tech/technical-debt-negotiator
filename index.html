@@ -205,6 +205,27 @@ body::before{
 ::-webkit-scrollbar-track{background:var(--ink);}
 ::-webkit-scrollbar-thumb{background:var(--muted);}
 
+/* ── Stepper ── */
+.stepper{
+  display:flex;align-items:center;padding:0 24px;
+  background:var(--ink);border-bottom:1px solid var(--border);
+  flex-shrink:0;height:52px;overflow:hidden;
+}
+.step{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.step-dot{
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--dim);background:var(--panel);flex-shrink:0;
+  transition:all .3s;
+}
+.step.done .step-dot{border-color:var(--green);background:rgba(46,213,115,.12);color:var(--green);font-size:10px;}
+.step.active .step-dot{border-color:var(--accent);background:rgba(255,107,53,.15);color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.15);}
+.step-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);white-space:nowrap;}
+.step.done .step-label{color:var(--green);}
+.step.active .step-label{color:var(--accent);}
+.step-line{flex:1;height:1px;background:var(--muted);min-width:16px;transition:background .3s;}
+.step-line.done{background:var(--green);}
+
 /* ── Agent flow steps ── */
 .agent-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;}
 .agent-step{font-family:'Space Mono',monospace;font-size:9px;padding:4px 10px;border:1px solid var(--border);color:var(--dim);}
@@ -285,6 +306,38 @@ const REPO_DATA = {
 
 // All debts flat
 const ALL_DEBTS = Object.values(REPO_DATA).flatMap(r => r.debts);
+
+// ── Stepper ───────────────────────────────────────────────────────────────
+const STEPS = [
+  {id:'jira',      icon:'🎫', label:'JIRA Backlog'},
+  {id:'repo',      icon:'📁', label:'Repository'},
+  {id:'debt',      icon:'🤖', label:'Debt Analysis'},
+  {id:'cost',      icon:'💰', label:'Cost Model'},
+  {id:'nego',      icon:'⚖️', label:'Negotiation'},
+  {id:'dashboard', icon:'📊', label:'Report'},
+];
+const PHASE_ORDER = STEPS.map(s=>s.id);
+
+function Stepper({phase}) {
+  const current = PHASE_ORDER.indexOf(phase);
+  return (
+    <div className="stepper">
+      {STEPS.map((s,i)=>{
+        const done   = i < current;
+        const active = i === current;
+        return (
+          <React.Fragment key={s.id}>
+            <div className={`step ${done?'done':''} ${active?'active':''}`}>
+              <div className="step-dot">{done ? '✓' : s.icon}</div>
+              <div className="step-label">{s.label}</div>
+            </div>
+            {i < STEPS.length-1 && <div className={`step-line ${i<current?'done':''}`}/>}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
 
 // ── Log panel ────────────────────────────────────────────────────────────
 function LogPanel({logs}) {
@@ -454,10 +507,8 @@ function PhaseRepo({selectedJira, repoName, onScan, scanning, scanned}) {
 // ── Phase 3: Debt Items ───────────────────────────────────────────────────
 function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
   const total = debts.filter(d=>selected.includes(d.id)).reduce((s,d)=>s+d.annual_cost,0);
-  const ref = useRef(null);
-  useEffect(()=>{ if(ref.current) ref.current.scrollIntoView({behavior:'smooth', block:'start'}); }, []);
   return (
-    <div className="fade-in" ref={ref}>
+    <div className="fade-in">
       <div className="phase-header">
         <div className="phase-icon">🤖</div>
         <div>
@@ -503,10 +554,8 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
 
 // ── Phase 4: Cost Preview (Live) ──────────────────────────────────────────
 function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation}) {
-  const ref = useRef(null);
-  useEffect(()=>{ if(ref.current) ref.current.scrollIntoView({behavior:'smooth', block:'start'}); }, []);
   return (
-    <div className="fade-in" ref={ref}>
+    <div className="fade-in">
       <div className="phase-header">
         <div className="phase-icon">💰</div>
         <div>
@@ -874,74 +923,19 @@ function App() {
           {selectedJira && <span className="badge badge-info">{selectedJira.key}</span>}
           {costData && <span className="badge badge-warn">{fmt(costData.annual_savings)}/YR DEBT</span>}
           {negotiation && <span className="badge badge-live">ANALYSIS COMPLETE</span>}
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',textTransform:'uppercase',letterSpacing:'.1em'}}>{phaseLabel}</span>
         </div>
       </div>
 
+      <Stepper phase={phase}/>
+
       <div className="body-layout">
         <div className="main-area">
-          {/* Always show JIRA phase at top */}
-          <PhaseJira
-            onSelect={selectJira}
-            selectedItem={selectedJira}
-            logs={logs}
-            running={jiraLoading}
-            onLoad={loadJira}
-          />
-
-          {/* Repo phase */}
-          {selectedJira && (phase==='repo'||phase==='debt'||phase==='cost'||phase==='nego'||phase==='dashboard') && (
-            <PhaseRepo
-              selectedJira={selectedJira}
-              repoName={selectedJira.repo}
-              onScan={scanRepo}
-              scanning={scanning}
-              scanned={scanned}
-            />
-          )}
-
-          {/* Debt phase */}
-          {scanned && (phase==='debt'||phase==='cost'||phase==='nego'||phase==='dashboard') && (
-            <PhaseDebt
-              debts={activeDebts}
-              selected={selectedDebts}
-              onToggle={toggleDebt}
-              onCalc={calcCost}
-              calculating={calculating}
-              costData={costData}
-            />
-          )}
-
-          {/* Cost phase */}
-          {costData && (phase==='cost'||phase==='nego'||phase==='dashboard') && (
-            <PhaseCost
-              costData={costData}
-              selectedDebts={selectedDebts}
-              allDebts={activeDebts}
-              onNegotiate={runNegotiation}
-              negotiating={negotiating}
-              negotiation={negotiation}
-            />
-          )}
-
-          {/* Nego phase */}
-          {negotiation && (phase==='nego'||phase==='dashboard') && (
-            <PhaseNego
-              negotiation={negotiation}
-              costData={costData}
-              onDashboard={()=>setPhase('dashboard')}
-            />
-          )}
-
-          {/* Dashboard */}
-          {phase==='dashboard' && (
-            <PhaseDashboard
-              costData={costData}
-              negotiation={negotiation}
-              selectedDebts={selectedDebts}
-              allDebts={ALL_DEBTS}
-            />
-          )}
+          {phase==='jira' && <PhaseJira onSelect={selectJira} selectedItem={selectedJira} logs={logs} running={jiraLoading} onLoad={loadJira}/>}
+          {phase==='repo' && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} onScan={scanRepo} scanning={scanning} scanned={scanned}/>}
+          {phase==='debt' && <PhaseDebt debts={activeDebts} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData}/>}
+          {phase==='cost' && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={activeDebts} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation}/>}
+          {phase==='nego' && <PhaseNego negotiation={negotiation} costData={costData} onDashboard={()=>setPhase('dashboard')}/>}
+          {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS}/>}
         </div>
 
         <LogPanel logs={logs}/>
