@@ -263,7 +263,6 @@ const JIRA_ITEMS = [
   { key:'ML-1402', title:'Our fraud model is 15 months out of date — it is missing new scam patterns', priority:'critical', repo:'training-orchestrator', summary:'Blocked: no automated pipeline to retrain the model; accuracy has dropped from 94% to 67% as fraudsters adapted', points:21 },
   { key:'ML-1403', title:'Predictions in testing look great but break in production — data mismatch', priority:'high', repo:'feature-store-service', summary:'Blocked: the data the model trains on is calculated differently from the data it sees at runtime, causing an 8% accuracy loss', points:8 },
   { key:'ML-1404', title:'Regulators are asking why we flagged a transaction — we cannot explain it', priority:'high', repo:'ml-inference-engine', summary:'Blocked: the model is a black box with no audit trail; compliance approval is on hold until we can show our reasoning', points:13 },
-  { key:'ML-1405', title:'Testing a new fraud detection idea takes 3 weeks — needs to take hours', priority:'medium', repo:'experiment-platform', summary:'Blocked: there is no framework to run two models side-by-side; every experiment requires a full manual deploy cycle', points:5 },
 ];
 
 // ── Repository data ───────────────────────────────────────────────────────
