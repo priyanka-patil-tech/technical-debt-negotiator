@@ -608,7 +608,7 @@ function PhaseNego({negotiation, costData, onDashboard}) {
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:'rgba(255,255,255,.06)',marginBottom:14}}>
           {[
             {label:'Success rate gap',val:'35% → 92%',note:'+57 points in your favour',cls:'green'},
-            {label:'Total timeline',val:'Same — 16 weeks',note:'Refactor path is not slower',cls:'blue'},
+            {label:'Time to working feature',val:`${costData.effort_weeks+4}w vs 16w+`,note:`Option B: ${costData.effort_weeks}w refactor + 4w build, ships once. Option A: 8w build + 8w+ rework after the 65% regression hits.`,cls:'blue'},
             {label:'If Option A fails',val:'Refactor anyway',note:`Both paths combined = ${costData.effort_weeks+16}w & double the cost`,cls:'red'},
             {label:'First-year net gain',val:fmt(costData.annual_savings - costData.refactoring_cost),note:`after paying back the ${fmt(costData.refactoring_cost)} investment`,cls:'green'},
           ].map((t,i)=>(
@@ -624,7 +624,7 @@ function PhaseNego({negotiation, costData, onDashboard}) {
         <div style={{padding:'10px 14px',border:'1px solid rgba(46,213,115,.2)',background:'rgba(46,213,115,.04)'}}>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',letterSpacing:'.08em',marginBottom:4}}>WHY THIS IS A CLEAR CALL, NOT A CLOSE CALL</div>
           <div style={{fontSize:'11px',color:'var(--soft)',lineHeight:1.7}}>
-            The gap between Option A (35%) and Option B (92%) is <strong style={{color:'var(--text)'}}>57 percentage points</strong> — well above the 15-point threshold where the choice becomes a judgement call. The timelines are identical at 16 weeks, meaning there is no speed advantage to building now. The only scenario where Option A wins is if all debt is low-severity and the team has high confidence the workarounds will hold — which is not the case here.
+            The gap between Option A (35%) and Option B (92%) is <strong style={{color:'var(--text)'}}>57 percentage points</strong> — well above the 15-point threshold where the choice becomes a judgement call. Option A's 8-week promise is misleading: with a 65% regression rate on this codebase, history shows the real timeline becomes 16 weeks or more once debugging and rollbacks are counted. Option B delivers in <strong style={{color:'var(--text)'}}>{costData.effort_weeks+4} weeks with one predictable schedule</strong> and no hidden rework. The only scenario where Option A wins is if the debt is low-severity and the team is confident the workarounds hold — neither is true here.
           </div>
         </div>
       </div>
