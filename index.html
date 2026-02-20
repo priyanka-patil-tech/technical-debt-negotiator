@@ -44,7 +44,7 @@ body::before{
 
 /* ── Body Layout: Main + Log panel ── */
 .body-layout{display:flex;flex:1;overflow:hidden;}
-.main-area{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px;}
+.main-area{flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:10px;}
 .log-panel{
   width:300px;flex-shrink:0;border-left:1px solid var(--border);
   background:var(--ink);display:flex;flex-direction:column;
@@ -86,17 +86,21 @@ body::before{
 .btn-blue:hover{filter:brightness(1.1);transform:translateY(-1px);}
 .btn-block{width:100%;justify-content:center;}
 
-/* ── JIRA items ── */
-.jira-item{
-  padding:10px 14px;border-left:3px solid var(--muted);
-  background:rgba(255,255,255,.025);margin-bottom:6px;
-  cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:10px;
+/* ── JIRA cards ── */
+.jira-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.jira-card{
+  padding:12px 14px;border:1px solid var(--border);border-top:3px solid var(--muted);
+  background:var(--panel);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;
 }
-.jira-item:hover{border-left-color:var(--accent);background:rgba(255,107,53,.08);}
-.jira-item.selected{border-left-color:var(--accent);background:rgba(255,107,53,.12);}
-.jira-key{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;min-width:90px;}
-.jira-title{font-size:12px;color:var(--soft);flex:1;}
-.jira-meta{font-size:10px;color:var(--dim);margin-top:2px;}
+.jira-card:hover{border-top-color:var(--accent);background:rgba(255,107,53,.06);}
+.jira-card.selected{border-top-color:var(--accent);background:rgba(255,107,53,.1);}
+.jira-card.priority-critical{border-top-color:var(--red);}
+.jira-card.priority-high{border-top-color:var(--amber);}
+.jira-card.priority-medium{border-top-color:var(--blue);}
+.jira-card.selected{border-top-color:var(--accent)!important;}
+.jira-card:hover{border-top-color:var(--accent)!important;}
+.jira-key{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);}
+.jira-title{font-size:12px;color:var(--soft);line-height:1.5;flex:1;}
 .jira-priority{font-family:'Space Mono',monospace;font-size:9px;padding:1px 6px;border:1px solid;}
 .priority-critical{color:var(--red);border-color:var(--red);}
 .priority-high{color:var(--amber);border-color:var(--amber);}
@@ -215,9 +219,9 @@ body::before{
 
 /* ── Phase transition ── */
 .phase-header{
-  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
   background:var(--ink);border:1px solid var(--border);border-left:3px solid var(--accent);
-  margin-bottom:16px;
+  margin-bottom:10px;
 }
 .phase-icon{font-size:20px;}
 .phase-title{font-family:'DM Serif Display',serif;font-size:18px;}
@@ -380,27 +384,27 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad}) {
           <div style={{marginBottom:8,fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
             {JIRA_ITEMS.length} blocker items · Click a ticket to trace its repository
           </div>
-          {JIRA_ITEMS.map(item=>(
-            <div key={item.key}
-              className={`jira-item ${selectedItem?.key===item.key?'selected':''}`}
-              onClick={()=>onSelect(item)}>
-              <div>
-                <div className="jira-key">{item.key}</div>
-                <span className={`jira-priority priority-${item.priority}`}>{item.priority}</span>
-              </div>
-              <div style={{flex:1}}>
+          <div className="jira-grid">
+            {JIRA_ITEMS.map(item=>(
+              <div key={item.key}
+                className={`jira-card priority-${item.priority} ${selectedItem?.key===item.key?'selected':''}`}
+                onClick={()=>onSelect(item)}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span className="jira-key">{item.key}</span>
+                  <span className={`jira-priority priority-${item.priority}`}>{item.priority}</span>
+                </div>
                 <div className="jira-title">{item.title}</div>
-                <div style={{marginTop:3}}>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
                   <a href={jiraIssueUrl(item.key)} target="_blank" rel="noopener noreferrer"
                     style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
                     onClick={e=>e.stopPropagation()}>
-                    🔗 {jiraIssueUrl(item.key)}
+                    🔗 Open ticket
                   </a>
+                  <span style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>{item.points}pts</span>
                 </div>
               </div>
-              <div style={{marginLeft:'auto',fontSize:'9px',fontFamily:"'Space Mono',monospace",color:'var(--dim)',whiteSpace:'nowrap'}}>{item.points}pts</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
