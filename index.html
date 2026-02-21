@@ -565,8 +565,17 @@ const PRODUCTS_DATA = {
         'Every decision explainable — compliance unblocked',
         'One-click rollback — no more 4h outages from bad deploys',
       ],
+      optA_stats: [
+        ['Timeline', '18 weeks'], ['Success Rate', '30%'],
+        ['Regression Risk', '70%'], ['Ongoing Cost', '$31K / mo'],
+      ],
+      optB_stats: [
+        ['Refactor', '14 weeks'], ['Feature Build', '4 weeks'],
+        ['Success Rate', '91%'], ['Break-Even', `Week 19`],
+      ],
+      negoReason: 'Every feature in this backlog depends on a model that has not been retrained in 15 months. Building real-time alerts on a batch-only pipeline produces features that ship but do not work as promised. Refactoring first (14 weeks) restores model accuracy to 91%, enables true real-time inference, and eliminates compounding debt — with break-even at Week 19.',
       dashFinalTitle: 'Refactor ML Infrastructure First',
-      dashNote: 'The monolithic batch pipeline and 15-month-old training data are directly blocking the majority of JIRA features. Building on current infrastructure = 65% regression risk + $23K/month compounding. Refactoring enables real-time inference, auto-retraining, and XAI compliance —',
+      dashNote: 'The monolithic batch pipeline and 15-month-old training data are directly blocking the majority of JIRA features. Building on current infrastructure = 70% regression risk + $31K/month compounding. Refactoring enables real-time inference, auto-retraining, and XAI compliance —',
     },
   },
 
@@ -612,8 +621,17 @@ const PRODUCTS_DATA = {
         'PCI-DSS compliance met — hardcoded keys removed, secrets in vault',
         'Deploys safe and fast — script replaced with validated, rollback-capable pipeline',
       ],
+      optA_stats: [
+        ['Timeline', '16 weeks'], ['Success Rate', '38%'],
+        ['Regression Risk', '62%'], ['Ongoing Cost', '$19K / mo'],
+      ],
+      optB_stats: [
+        ['Refactor', '11 weeks'], ['Feature Build', '5 weeks'],
+        ['Success Rate', '89%'], ['Break-Even', 'Week 26'],
+      ],
+      negoReason: 'The God Commons Library means adding any new payment method touches all 23 microservices simultaneously — at 62% regression risk. The unpatched Log4Shell CVE and hardcoded credentials are a compliance incident waiting to happen before the Q2 audit. Refactoring takes 11 weeks, lets every payment method ship safely, and eliminates $1.47M/year in debt from Week 26 onward.',
       dashFinalTitle: 'Refactor Payment Platform First',
-      dashNote: 'The God Commons Library and unpatched Log4Shell are directly blocking all JIRA features. Building on current infrastructure = 65% regression risk and a pending PCI-DSS audit failure. Refactoring enables safe modular changes, compliance, and reliable deployments —',
+      dashNote: 'The God Commons Library and unpatched Log4Shell are directly blocking all JIRA features. Building on current infrastructure = 62% regression risk and a pending PCI-DSS audit failure. Refactoring enables safe modular changes, compliance, and reliable deployments —',
     },
   },
 
@@ -670,6 +688,15 @@ const PRODUCTS_DATA = {
         'One canonical ETL pipeline — debugging 4x faster, no accidental duplicate processing',
         '12 TB archive audited — zombie storage eliminated, data governance baseline established',
       ],
+      optA_stats: [
+        ['Timeline', '14 weeks'], ['Success Rate', '33%'],
+        ['Regression Risk', '68%'], ['Ongoing Cost', '$26K / mo'],
+      ],
+      optB_stats: [
+        ['Refactor', '13 weeks'], ['Feature Build', '4 weeks'],
+        ['Success Rate', '94%'], ['Break-Even', 'Week 21'],
+      ],
+      negoReason: 'Building a real-time dashboard on a pipeline that processes every event two to three times means shipping a dashboard with numbers the business cannot trust. The SQL injection in revenue-calculator is a live breach risk on every API call. Fixing the pipeline first (13 weeks) delivers a dashboard on clean, auditable data — and eliminates $1.68M/year in debt from Week 21 onward.',
       dashFinalTitle: 'Refactor Analytics Infrastructure First',
       dashNote: 'Triple Kafka consumers and an unpatched SQL injection in revenue-calculator are directly blocking all pipeline improvements. Building on current infrastructure = live data breach exposure + 14-hour reporting delays compounding every single day. Refactoring eliminates the breach risk, halves reporting time, and cuts infrastructure cost —',
     },
@@ -1045,29 +1072,22 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
       <div className="phase-header">
         <div className="phase-icon">⚖️</div>
         <div>
-          <div className="phase-title">Negotiation Agent — Refactor vs Build</div>
-          <div className="phase-sub">AI agent cross-references debt impact against JIRA feature blockers and models both paths.</div>
+          <div className="phase-title">Refactor vs Build</div>
+          <div className="phase-sub">AI agent models both paths against your debt costs and delivery timeline.</div>
         </div>
       </div>
 
+      {/* Option cards — stats only, no bullet lists */}
       <div className="nego-grid" style={{marginBottom:14}}>
         <div className="nego-card opt-a">
           <div className="nego-card-label a">OPTION A</div>
           <div className="nego-card-title">Build Features Now</div>
-          {[
-            ['Timeline','16 weeks'],['Success Rate','35%'],['Risk','HIGH'],
-            ['Regression Risk','65%'],['Ongoing Cost','$23K/mo'],['Break-Even','Never (costs grow)'],
-          ].map(([l,v],i)=>(
+          {nego.optA_stats.map(([l,v],i)=>(
             <div key={i} className="nego-stat">
               <span className="nego-stat-label">{l}</span>
               <span className="nego-stat-val" style={{color:i===1||i===2?'var(--red)':undefined}}>{v}</span>
             </div>
           ))}
-          <div style={{marginTop:12,fontSize:'11px',color:'var(--red)',lineHeight:1.9}}>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT HAPPENS NEXT</div>
-            {nego.optA_items.map((item,i)=><div key={i}>✗ {item}</div>)}
-            <div>✗ {fmt(costData.annual_savings)}/yr in debt costs keep compounding</div>
-          </div>
         </div>
 
         <div className="nego-vs">vs</div>
@@ -1075,49 +1095,33 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
         <div className="nego-card opt-b">
           <div className="nego-card-label b">OPTION B — RECOMMENDED</div>
           <div className="nego-card-title">Refactor First, Then Build</div>
-          {[
-            ['Refactor','12 weeks'],['Feature Build','4 weeks'],['Total','16 weeks'],
-            ['Success Rate','92%'],['Risk','LOW'],['Break-Even',`Week ${costData.break_even_weeks}`],
-          ].map(([l,v],i)=>(
+          {nego.optB_stats.map(([l,v],i)=>(
             <div key={i} className="nego-stat">
               <span className="nego-stat-label">{l}</span>
-              <span className="nego-stat-val" style={{color:i===3||i===4?'var(--green)':undefined}}>{v}</span>
+              <span className="nego-stat-val" style={{color:i===2?'var(--green)':undefined}}>{v}</span>
             </div>
           ))}
-          <div style={{marginTop:12,fontSize:'11px',color:'var(--green)',lineHeight:1.9}}>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT YOU UNLOCK</div>
-            {nego.optB_items.map((item,i)=><div key={i}>✓ {item}</div>)}
-            <div>✓ {fmt(costData.annual_savings)}/yr saved — all {jiraCount} features ship cleanly</div>
-          </div>
         </div>
       </div>
 
+      {/* Recommendation */}
       <div className="rec-box" style={{marginBottom:14}}>
         <div className="rec-label">✓ AGENT RECOMMENDATION</div>
         <div className="rec-title">Refactor First — Then Ship All {jiraCount} Features</div>
         <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
 
-        {/* Tradeoff grid */}
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:'rgba(255,255,255,.06)',marginBottom:14}}>
-          {[
-            {label:'Success rate gap',val:'35% → 92%',note:'+57 points in your favour',cls:'green'},
-            {label:'Time to working feature',val:`${costData.effort_weeks+4}w vs 16w+`,note:`Option B: ${costData.effort_weeks}w refactor + 4w build, ships once. Option A: 8w build + 8w+ rework after the 65% regression hits.`,cls:'blue'},
-            {label:'If Option A fails',val:'Refactor anyway',note:`Both paths combined = ${costData.effort_weeks+16}w & double the cost`,cls:'red'},
-            {label:'First-year net gain',val:fmt(costData.annual_savings - costData.refactoring_cost),note:`after paying back the ${fmt(costData.refactoring_cost)} investment`,cls:'green'},
-          ].map((t,i)=>(
-            <div key={i} style={{padding:'10px 14px',background:'var(--surface2)'}}>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:3,letterSpacing:'.06em'}}>{t.label.toUpperCase()}</div>
-              <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:'15px',color:`var(--${t.cls})`}}>{t.val}</div>
-              <div style={{fontSize:'10px',color:'var(--dim)',marginTop:2}}>{t.note}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Confidence signal */}
-        <div style={{padding:'10px 14px',border:'1px solid var(--green-border)',background:'var(--green-bg)',borderRadius:'8px'}}>
-          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',letterSpacing:'.08em',marginBottom:4}}>WHY THIS IS A CLEAR CALL, NOT A CLOSE CALL</div>
-          <div style={{fontSize:'11px',color:'var(--soft)',lineHeight:1.7}}>
-            The gap between Option A (35%) and Option B (92%) is <strong style={{color:'var(--text)'}}>57 percentage points</strong> — well above the 15-point threshold where the choice becomes a judgement call. Option A's 8-week promise is misleading: with a 65% regression rate on this codebase, history shows the real timeline becomes 16 weeks or more once debugging and rollbacks are counted. Option B delivers in <strong style={{color:'var(--text)'}}>{costData.effort_weeks+4} weeks with one predictable schedule</strong> and no hidden rework. The only scenario where Option A wins is if the debt is low-severity and the team is confident the workarounds hold — neither is true here.
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+          <div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>IF YOU BUILD NOW</div>
+            {nego.optA_items.slice(0,3).map((item,i)=>(
+              <div key={i} style={{fontSize:'11.5px',color:'var(--red)',lineHeight:1.85}}>✗ {item}</div>
+            ))}
+          </div>
+          <div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>AFTER REFACTORING</div>
+            {nego.optB_items.slice(0,3).map((item,i)=>(
+              <div key={i} style={{fontSize:'11.5px',color:'var(--green)',lineHeight:1.85}}>✓ {item}</div>
+            ))}
           </div>
         </div>
       </div>
@@ -1376,15 +1380,18 @@ function App() {
     await wait(700);
     const blocked = activeJiraItems.filter(t=>t.repo===selectedJira?.repo||t.priority==='critical');
     addLog(`  🚫 ${blocked.length}/${activeJiraItems.length} features blocked or critically slowed by debt`,'warn');
+    const pNego = product.nego;
+    const optA = pNego.optA_stats;
+    const optB = pNego.optB_stats;
     await wait(500);
-    addLog(`  🎯 Option A (Build Now): 16w, 35% success, $23K/mo ongoing`,'warn');
+    addLog(`  🎯 Option A (Build Now): ${optA[0][1]}, ${optA[1][1]} success, ${optA[3][1]} ongoing`,'warn');
     await wait(400);
-    addLog(`  🎯 Option B (Refactor First): ${costData.effort_weeks+4}w, 92% success, saves ${fmt(costData.annual_savings)}/yr`,'info');
+    addLog(`  🎯 Option B (Refactor First): ${optB[0][1]} refactor + ${optB[1][1]} build, ${optB[2][1]} success`,'info');
     await wait(600);
     addLog(`  ✓ RECOMMENDATION: REFACTOR FIRST`,'ok');
     const nego = {
       recommendation:'refactor_first',
-      reason:`${blocked.length} of ${activeJiraItems.length} features are blocked by critical debt in ${product.label}. Building now carries 65% regression risk plus $23K/month compounding maintenance. Refactoring (${costData.effort_weeks} weeks) enables all features at 92% confidence — and breaks even at Week ${costData.break_even_weeks}, generating ${fmt(costData.annual_savings)}/year thereafter.`,
+      reason: pNego.negoReason,
     };
     setNegotiation(nego);
     setNegotiating(false);
