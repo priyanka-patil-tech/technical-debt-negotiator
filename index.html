@@ -1055,68 +1055,74 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
 // ── Phase 6: Final Dashboard ──────────────────────────────────────────────
 function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, jiraItems}) {
   const debts = allDebts.filter(d=>selectedDebts.includes(d.id));
+  const sevColor = s => s==='critical'?'var(--red)':s==='high'?'var(--amber)':'var(--blue)';
+  const sevPill  = s => s==='critical'?'pill-red':s==='high'?'pill-amber':'pill-blue';
+
   return (
     <div className="fade-in">
-      <div className="phase-header" style={{borderLeftColor:'var(--green)'}}>
+
+      {/* Header */}
+      <div className="phase-header" style={{borderLeftColor:'var(--green)',marginBottom:16}}>
         <div className="phase-icon">📊</div>
-        <div>
-          <div className="phase-title">Final Dashboard — Tech Debt Report</div>
-          <div className="phase-sub">Complete analysis ready to share with your PM, CTO, or engineering board.</div>
+        <div style={{flex:1}}>
+          <div className="phase-title">Tech Debt Report</div>
+          <div className="phase-sub">Ready to share with your PM, CTO, or engineering board.</div>
         </div>
-        <span className="badge badge-live" style={{marginLeft:'auto'}}>ANALYSIS COMPLETE</span>
+        <span className="badge badge-live">ANALYSIS COMPLETE</span>
       </div>
 
-      <div className="final-kpi-grid" style={{marginBottom:14}}>
+      {/* KPI row */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
         {[
-          {label:'Annual Debt Cost',val:fmt(costData.annual_savings),cls:'red',sub:'eliminated after refactor'},
-          {label:'Refactoring Investment',val:fmt(costData.refactoring_cost),cls:'amber',sub:`${costData.effort_weeks} weeks`},
-          {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'green',sub:'then saves forever'},
-          {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:'green',sub:'return on investment'},
-          {label:'Features Unblocked',val:`${jiraItems.length}/${jiraItems.length}`,cls:'blue',sub:`All ${jiraItems.length} JIRA features`},
+          {label:'Annual Debt Cost',    val:fmt(costData.annual_savings),             cls:'red',   sub:'if left unfixed'},
+          {label:'Fix Investment',      val:fmt(costData.refactoring_cost),            cls:'amber', sub:`${costData.effort_weeks}w · 4 engineers`},
+          {label:'Break-Even',          val:`Week ${costData.break_even_weeks}`,       cls:'green', sub:'saves every week after'},
+          {label:'First-Year ROI',      val:`${costData.roi_pct}%`,                   cls:costData.roi_pct>0?'green':'red', sub:'return on investment'},
+          {label:'Features Unblocked',  val:`${jiraItems.length}/${jiraItems.length}`, cls:'blue',  sub:'all JIRA tickets'},
         ].map((k,i)=>(
-          <div key={i} className="final-kpi">
-            <div className="kpi-label">{k.label}</div>
-            <div className={`kpi-val ${k.cls}`} style={{fontSize:'22px'}}>{k.val}</div>
-            <div className="kpi-sub">{k.sub}</div>
+          <div key={i} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'14px 16px'}}>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{k.label}</div>
+            <div className={`kpi-val ${k.cls}`} style={{fontSize:'20px',marginBottom:3}}>{k.val}</div>
+            <div style={{fontSize:'10px',color:'var(--dim)'}}>{k.sub}</div>
           </div>
         ))}
       </div>
 
-      <div className="rec-box" style={{marginBottom:14}}>
-        <div className="rec-label">✓ FINAL RECOMMENDATION</div>
-        <div className="rec-title">{nego.dashFinalTitle} — Ship All {jiraItems.length} Features by Week 16</div>
+      {/* Recommendation */}
+      <div className="rec-box" style={{marginBottom:16}}>
+        <div className="rec-label">✓ RECOMMENDATION</div>
+        <div className="rec-title" style={{fontSize:'17px',marginBottom:6}}>{nego.dashFinalTitle} — Ship All {jiraItems.length} Features by Week 16</div>
         <div className="rec-body">
           This platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
           {' '}{nego.dashNote} with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
         </div>
       </div>
 
-      <div style={{marginBottom:14}}>
-        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
-          Selected Debt Items ({debts.length})
+      {/* Debt item summary table */}
+      <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',overflow:'hidden'}}>
+        <div style={{padding:'10px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--soft)',letterSpacing:'.08em',textTransform:'uppercase'}}>
+            Debt Items Included ({debts.length})
+          </span>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--red)'}}>
+            {fmt(costData.annual_savings)}/yr total
+          </span>
         </div>
-        {debts.map(d=>(
-          <div key={d.id} className={`debt-row ${d.severity}`} style={{marginBottom:4}}>
-            <div className="debt-info">
-              <div><span className={`debt-type-tag ${d.severity}`}>[{d.type.replace(/_/g,' ').toUpperCase()}]</span> <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span></div>
-              <div className="debt-desc">{d.description}</div>
-            </div>
-            <div className="debt-cost-tag">
-              <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
-              <div className="debt-effort">{d.fix_weeks}w fix</div>
-            </div>
+        {debts.map((d,i)=>(
+          <div key={d.id} style={{
+            display:'flex',alignItems:'center',gap:12,
+            padding:'10px 16px',
+            borderBottom: i<debts.length-1 ? '1px solid var(--border)' : 'none',
+            background: i%2===0 ? 'transparent' : 'rgba(255,255,255,.015)',
+          }}>
+            <span className={`pill ${sevPill(d.severity)}`} style={{flexShrink:0,minWidth:58,textAlign:'center'}}>{d.severity}</span>
+            <span style={{flex:1,fontSize:'13px',color:'var(--text)',fontWeight:500}}>{d.type}</span>
+            <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:sevColor(d.severity),flexShrink:0}}>{fmt(d.annual_cost)}/yr</span>
+            <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)',flexShrink:0,minWidth:40,textAlign:'right'}}>{d.fix_weeks}w fix</span>
           </div>
         ))}
       </div>
 
-      <div style={{padding:'14px 16px',background:'var(--surface)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-around',flexWrap:'wrap',gap:16}}>
-        {[['🎫','JIRA Fetcher'],['📁','Repo Scanner'],['🤖','Debt Analyzer'],['💰','Cost Model'],['⚖️','Negotiator']].map(([icon,label],i)=>(
-          <div key={i} style={{textAlign:'center'}}>
-            <div style={{fontSize:'24px'}}>{icon}</div>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>✓ {label}</div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
