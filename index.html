@@ -576,10 +576,6 @@ const PRODUCTS_DATA = {
     description: 'Core payment processing & checkout infrastructure',
     project: { name:'Payment Platform', key:'PAY', id:'PAY-2001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/PAY/boards/backlog' },
     jiraItems: [
-      { key:'PAY-2001', title:'Add Apple Pay & Google Wallet — checkout options every competitor already offers', priority:'critical', repo:'payment-platform-tech-debt', points:13 },
-      { key:'PAY-2002', title:'Checkout failure rate is 3.2% — every failed payment is $340K/month in abandoned carts', priority:'critical', repo:'payment-platform-tech-debt', points:21 },
-      { key:'PAY-2003', title:'PCI-DSS compliance audit deadline is Q2 — failing means losing card processing rights', priority:'high', repo:'payment-platform-tech-debt', points:13 },
-      { key:'PAY-2004', title:'Deployments take 4 hours and fail 1 in 5 times — engineers spend 20% of their week on this', priority:'high', repo:'payment-platform-tech-debt', points:8 },
       { key:'PAY-2005', title:'No saved payment methods — customers re-enter card details on every purchase', priority:'medium', repo:'payment-platform-tech-debt', points:5 },
       { key:'PAY-2006', title:'Refund process takes 7 days and requires manual approval — competitors do it instantly', priority:'medium', repo:'payment-platform-tech-debt', points:8 },
       { key:'PAY-2007', title:'No split payment support — users paying with two cards have to call support', priority:'medium', repo:'payment-platform-tech-debt', points:5 },
@@ -627,10 +623,6 @@ const PRODUCTS_DATA = {
     description: 'Real-time event streaming & batch reporting infrastructure',
     project: { name:'Analytics Pipeline', key:'AP', id:'AP-3001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/AP/boards/backlog' },
     jiraItems: [
-      { key:'AP-3001', title:'Kafka consumer running 3 versions simultaneously — v1 still handles 40% of traffic, nobody dares shut it down', priority:'critical', repo:'kafka-stream-processor', points:13 },
-      { key:'AP-3002', title:'Daily revenue report takes 14 hours — business is making decisions on yesterday\'s data every single day', priority:'critical', repo:'revenue-calculator', points:21 },
-      { key:'AP-3003', title:'SQL injection in revenue-calculator.py — user input hits the production database unsanitised', priority:'critical', repo:'revenue-calculator', points:13 },
-      { key:'AP-3004', title:'5 ETL pipeline versions active in Airflow — team doesn\'t know which one is canonical or if they overlap', priority:'high', repo:'airflow-pipeline-service', points:8 },
       { key:'AP-3005', title:'No self-service data export — analysts wait 2 days for engineering to pull ad-hoc reports', priority:'medium', repo:'revenue-calculator', points:5 },
       { key:'AP-3006', title:'Dashboard has no filters or date range — every view shows all-time data only', priority:'medium', repo:'airflow-pipeline-service', points:5 },
       { key:'AP-3007', title:'Data quality failures are silent — pipeline completes with bad data and nobody knows', priority:'medium', repo:'kafka-stream-processor', points:8 },
