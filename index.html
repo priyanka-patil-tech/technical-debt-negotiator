@@ -1334,6 +1334,17 @@ function App() {
     addLog(`✓ Negotiation complete — recommendation ready`,'ok');
   };
 
+  const goHome = () => {
+    setPhase('landing');
+    setSelectedJira(null);
+    setJiraLoaded(false);
+    setScanned(false);
+    setSelectedDebts([]);
+    setCostData(null);
+    setNegotiation(null);
+    setLogs([]);
+  };
+
   const activeRepo = selectedJira ? activeRepoData[selectedJira.repo] : null;
   const activeDebts = activeRepo ? activeRepo.debts : [];
 
@@ -1348,6 +1359,11 @@ function App() {
         <div className="logo">
           <div className="logo-mark">TD</div>
           <div className="logo-text">Tech Debt <span>Negotiator</span></div>
+          {phase !== 'landing' && (
+            <button onClick={goHome} className="btn btn-secondary" style={{marginLeft:12,padding:'5px 12px',fontSize:'11px',display:'flex',alignItems:'center',gap:5}}>
+              ⌂ Home
+            </button>
+          )}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
           {selectedJira && <span className="badge badge-info">{selectedJira.key}</span>}
