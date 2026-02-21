@@ -7,246 +7,425 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root {
-  --black:#0a0a0a; --ink:#111318; --panel:#161b22; --border:#21262d;
-  --muted:#30363d; --dim:#6e7681; --text:#e6edf3; --soft:#c9d1d9;
-  --red:#ff4757; --amber:#ffa502; --green:#2ed573; --blue:#1e90ff; --accent:#ff6b35;
+  /* Core palette — deep navy IDE meets JIRA blue */
+  --bg:        #0d1117;
+  --surface:   #161c26;
+  --surface2:  #1c2333;
+  --surface3:  #212d40;
+  --border:    #2a3547;
+  --border2:   #364055;
+  --dim:       #5c6e8a;
+  --muted:     #8899b0;
+  --soft:      #c2cfe0;
+  --text:      #e2ecf8;
+
+  /* Accent — JIRA-ish cobalt blue shifted to teal-blue */
+  --accent:    #3b82f6;
+  --accent2:   #60a5fa;
+  --accent-bg: rgba(59,130,246,.1);
+
+  /* Semantic colors */
+  --red:       #f87171;
+  --red-bg:    rgba(248,113,113,.1);
+  --red-border:rgba(248,113,113,.3);
+  --amber:     #fbbf24;
+  --amber-bg:  rgba(251,191,36,.1);
+  --amber-border:rgba(251,191,36,.3);
+  --green:     #34d399;
+  --green-bg:  rgba(52,211,153,.1);
+  --green-border:rgba(52,211,153,.3);
+  --blue:      #60a5fa;
+  --blue-bg:   rgba(96,165,250,.1);
+  --blue-border:rgba(96,165,250,.3);
+
+  --radius:    8px;
+  --radius-sm: 5px;
+  --radius-lg: 12px;
+
+  --shadow:    0 1px 3px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.25);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
-body{
-  background:var(--black);color:var(--text);
-  font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;
-}
-body::before{
-  content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 4px);
-  pointer-events:none;z-index:9999;
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Shell ── */
-.shell{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 24px;border-bottom:1px solid var(--border);
-  background:var(--ink);flex-shrink:0;
-}
-.logo{display:flex;align-items:center;gap:10px;}
-.logo-mark{width:28px;height:28px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);}
-.logo-text{font-family:'DM Serif Display',serif;font-size:16px;}
-.logo-text span{color:var(--accent);font-style:italic;}
-.badge{font-family:'Space Mono',monospace;font-size:9px;padding:2px 8px;border:1px solid;border-radius:2px;}
-.badge-live{color:var(--green);border-color:var(--green);}
-.badge-warn{color:var(--amber);border-color:var(--amber);}
-.badge-info{color:var(--blue);border-color:var(--blue);}
+.shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-/* ── Body Layout: Main + Log panel ── */
-.body-layout{display:flex;flex:1;overflow:hidden;}
-.main-area{flex:1;overflow-y:auto;padding:14px 20px;display:flex;flex-direction:column;gap:10px;}
-.log-panel{
-  width:300px;flex-shrink:0;border-left:1px solid var(--border);
-  background:var(--ink);display:flex;flex-direction:column;
+/* ── Topbar ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
-.log-panel-header{
-  padding:10px 14px;border-bottom:1px solid var(--border);
-  font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);
-  letter-spacing:.1em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700; color: #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,.4);
 }
-.log-panel-body{flex:1;overflow-y:auto;padding:10px 14px;}
-.log-line{font-family:'Space Mono',monospace;font-size:10px;line-height:1.8;}
-.log-ok{color:var(--green);}
-.log-info{color:var(--blue);}
-.log-warn{color:var(--amber);}
-.log-error{color:var(--red);}
-.log-dim{color:var(--dim);}
+.logo-text { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -.2px; }
+.logo-text span { color: var(--accent2); }
+.badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 20px;
+  letter-spacing: .04em;
+}
+.badge-live   { color: var(--green); border-color: var(--green-border); background: var(--green-bg); }
+.badge-warn   { color: var(--amber); border-color: var(--amber-border); background: var(--amber-bg); }
+.badge-info   { color: var(--blue);  border-color: var(--blue-border);  background: var(--blue-bg); }
+
+/* ── Body Layout ── */
+.body-layout { display: flex; flex: 1; overflow: hidden; }
+.main-area {
+  flex: 1; overflow-y: auto;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.log-panel {
+  width: 300px; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; flex-direction: column;
+}
+.log-panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim);
+  letter-spacing: .1em; text-transform: uppercase;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.log-panel-body { flex: 1; overflow-y: auto; padding: 10px 14px; }
+.log-line { font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.9; }
+.log-ok    { color: var(--green); }
+.log-info  { color: var(--blue); }
+.log-warn  { color: var(--amber); }
+.log-error { color: var(--red); }
+.log-dim   { color: var(--dim); }
 
 /* ── Cards ── */
-.card{background:var(--panel);border:1px solid var(--border);}
-.card-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.card-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);}
-.card-body{padding:16px;}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.card-head {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface2);
+}
+.card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.card-body { padding: 18px; }
 
 /* ── Buttons ── */
-.btn{
-  padding:9px 20px;cursor:pointer;border:none;
-  font-family:'Space Mono',monospace;font-size:11px;
-  letter-spacing:.06em;text-transform:uppercase;
-  transition:all .2s;display:inline-flex;align-items:center;gap:8px;
+.btn {
+  padding: 8px 18px;
+  cursor: pointer; border: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .01em;
+  border-radius: var(--radius);
+  transition: all .18s ease;
+  display: inline-flex; align-items: center; gap: 7px;
 }
-.btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover:not(:disabled){background:#ff8050;transform:translateY(-1px);}
-.btn-primary:disabled{background:var(--muted);cursor:not-allowed;}
-.btn-secondary{background:var(--panel);color:var(--text);border:1px solid var(--border);}
-.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
-.btn-success{background:var(--green);color:#000;}
-.btn-success:hover{filter:brightness(1.1);transform:translateY(-1px);}
-.btn-blue{background:var(--blue);color:#fff;}
-.btn-blue:hover{filter:brightness(1.1);transform:translateY(-1px);}
-.btn-block{width:100%;justify-content:center;}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,.35);
+}
+.btn-primary:hover:not(:disabled) { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(59,130,246,.45); }
+.btn-primary:disabled { background: var(--surface3); color: var(--dim); cursor: not-allowed; box-shadow: none; }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--soft);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.btn-success {
+  background: var(--green);
+  color: #0a1a14;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(52,211,153,.3);
+}
+.btn-success:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-blue { background: var(--blue); color: #0d1831; }
+.btn-blue:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-block { width: 100%; justify-content: center; }
 
 /* ── JIRA cards ── */
-.jira-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.jira-card{
-  padding:12px 14px;border:1px solid var(--border);border-top:3px solid var(--muted);
-  background:var(--panel);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;
+.jira-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.jira-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all .2s ease;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--shadow);
 }
-.jira-card:hover{border-top-color:var(--accent);background:rgba(255,107,53,.06);}
-.jira-card.selected{border-top-color:var(--accent);background:rgba(255,107,53,.1);}
-.jira-card.priority-critical{border-top-color:var(--red);}
-.jira-card.priority-high{border-top-color:var(--amber);}
-.jira-card.priority-medium{border-top-color:var(--blue);}
-.jira-card.selected{border-top-color:var(--accent)!important;}
-.jira-card:hover{border-top-color:var(--accent)!important;}
-.jira-key{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent);}
-.jira-title{font-size:12px;color:var(--soft);line-height:1.5;flex:1;}
-.jira-priority{font-family:'Space Mono',monospace;font-size:9px;padding:1px 6px;border:1px solid;}
-.priority-critical{color:var(--red);border-color:var(--red);}
-.priority-high{color:var(--amber);border-color:var(--amber);}
-.priority-medium{color:var(--blue);border-color:var(--blue);}
+.jira-card:hover { border-left-color: var(--accent); background: var(--surface2); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.jira-card.selected { border-left-color: var(--accent) !important; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); box-shadow: 0 0 0 1px var(--accent), var(--shadow-md); }
+.jira-card.priority-critical { border-left-color: var(--red); }
+.jira-card.priority-high     { border-left-color: var(--amber); }
+.jira-card.priority-medium   { border-left-color: var(--blue); }
+.jira-card:hover { border-left-color: var(--accent) !important; }
+.jira-key { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; color: var(--accent2); }
+.jira-title { font-size: 12.5px; color: var(--soft); line-height: 1.55; flex: 1; }
+.jira-priority {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 20px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.priority-critical { color: var(--red);   border-color: var(--red-border);   background: var(--red-bg); }
+.priority-high     { color: var(--amber); border-color: var(--amber-border); background: var(--amber-bg); }
+.priority-medium   { color: var(--blue);  border-color: var(--blue-border);  background: var(--blue-bg); }
 
-/* ── Debt items with checkbox ── */
-.debt-row{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:10px 14px;border-left:3px solid var(--muted);
-  background:rgba(255,255,255,.025);margin-bottom:6px;
-  transition:all .2s;
+/* ── Debt items ── */
+.debt-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin-bottom: 8px;
+  transition: all .2s;
 }
-.debt-row.critical{border-left-color:var(--red);}
-.debt-row.high{border-left-color:var(--amber);}
-.debt-row.medium{border-left-color:var(--blue);}
-.debt-checkbox{width:14px;height:14px;cursor:pointer;margin-top:2px;accent-color:var(--accent);flex-shrink:0;}
-.debt-info{flex:1;}
-.debt-type-tag{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;}
-.debt-type-tag.critical{color:var(--red);}
-.debt-type-tag.high{color:var(--amber);}
-.debt-type-tag.medium{color:var(--blue);}
-.debt-desc{font-size:12px;color:var(--soft);margin:2px 0;}
-.debt-loc{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);}
-.debt-cost-tag{text-align:right;flex-shrink:0;}
-.debt-cost-num{font-family:'Space Mono',monospace;font-size:12px;color:var(--red);}
-.debt-effort{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);margin-top:2px;}
+.debt-row.critical { border-left-color: var(--red); }
+.debt-row.high     { border-left-color: var(--amber); }
+.debt-row.medium   { border-left-color: var(--blue); }
+.debt-checkbox {
+  width: 15px; height: 15px; cursor: pointer; margin-top: 3px;
+  accent-color: var(--accent); flex-shrink: 0;
+}
+.debt-info { flex: 1; }
+.debt-type-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.debt-type-tag.critical { color: var(--red); }
+.debt-type-tag.high     { color: var(--amber); }
+.debt-type-tag.medium   { color: var(--blue); }
+.debt-desc { font-size: 12.5px; color: var(--soft); margin: 4px 0; line-height: 1.6; }
+.debt-loc { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dim); }
+.debt-cost-tag { text-align: right; flex-shrink: 0; }
+.debt-cost-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--red); }
+.debt-effort { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dim); margin-top: 2px; }
 
 /* ── Repo display ── */
-.repo-box{
-  background:var(--ink);border:1px solid var(--border);
-  padding:10px 14px;display:flex;align-items:center;gap:10px;
-  font-family:'Space Mono',monospace;font-size:12px;
+.repo-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
 }
-.repo-icon{font-size:16px;}
-.repo-name{color:var(--accent);}
+.repo-icon { font-size: 18px; }
+.repo-name { color: var(--accent2); font-weight: 500; }
 
 /* ── KPI boxes ── */
-.kpi-grid{display:grid;gap:12px;}
-.kpi-box{background:var(--panel);border:1px solid var(--border);padding:14px;}
-.kpi-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
-.kpi-val{font-family:'DM Serif Display',serif;font-size:28px;line-height:1.1;}
-.kpi-val.red{color:var(--red);}
-.kpi-val.green{color:var(--green);}
-.kpi-val.amber{color:var(--amber);}
-.kpi-val.blue{color:var(--blue);}
-.kpi-sub{font-size:10px;color:var(--dim);margin-top:2px;}
+.kpi-grid { display: grid; gap: 12px; }
+.kpi-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.kpi-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px;
+}
+.kpi-val { font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -.5px; }
+.kpi-val.red   { color: var(--red); }
+.kpi-val.green { color: var(--green); }
+.kpi-val.amber { color: var(--amber); }
+.kpi-val.blue  { color: var(--blue); }
+.kpi-sub { font-size: 10.5px; color: var(--dim); margin-top: 3px; }
 
 /* ── Negotiation cards ── */
-.nego-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;}
-.nego-vs{padding-top:50px;font-family:'DM Serif Display',serif;font-size:24px;color:var(--muted);text-align:center;}
-.nego-card{border:2px solid;padding:16px;}
-.nego-card.opt-a{border-color:var(--red);}
-.nego-card.opt-b{border-color:var(--green);}
-.nego-card-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;}
-.nego-card-label.a{color:var(--red);}
-.nego-card-label.b{color:var(--green);}
-.nego-card-title{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:12px;}
-.nego-stat{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
-.nego-stat:last-child{border-bottom:none;}
-.nego-stat-label{color:var(--dim);}
-.nego-stat-val{font-family:'Space Mono',monospace;}
+.nego-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start; }
+.nego-vs { padding-top: 50px; font-size: 22px; font-weight: 700; color: var(--border2); text-align: center; }
+.nego-card { border: 1.5px solid; padding: 18px; border-radius: var(--radius); }
+.nego-card.opt-a { border-color: var(--red-border); background: var(--red-bg); }
+.nego-card.opt-b { border-color: var(--green-border); background: var(--green-bg); }
+.nego-card-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; font-weight: 600;
+}
+.nego-card-label.a { color: var(--red); }
+.nego-card-label.b { color: var(--green); }
+.nego-card-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+.nego-stat {
+  display: flex; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 11.5px;
+}
+.nego-stat:last-child { border-bottom: none; }
+.nego-stat-label { color: var(--muted); }
+.nego-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
 /* ── Final dashboard ── */
-.final-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);}
-.final-kpi{background:var(--panel);padding:14px 16px;}
+.final-kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+.final-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
 
 /* ── Recommendation box ── */
-.rec-box{padding:16px 20px;border:1px solid rgba(46,213,115,.3);background:rgba(46,213,115,.06);}
-.rec-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--green);letter-spacing:.12em;margin-bottom:6px;}
-.rec-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:8px;}
-.rec-body{font-size:12px;color:var(--soft);line-height:1.7;}
+.rec-box {
+  padding: 18px 22px;
+  border: 1px solid var(--green-border);
+  border-left: 4px solid var(--green);
+  background: var(--green-bg);
+  border-radius: var(--radius);
+}
+.rec-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--green); letter-spacing: .12em; margin-bottom: 6px; font-weight: 600; }
+.rec-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.rec-body { font-size: 12.5px; color: var(--soft); line-height: 1.75; }
 
-/* ── Section header ── */
-.section-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px;}
-.section-sub{font-size:11px;color:var(--dim);margin-bottom:12px;}
+/* ── Section headers ── */
+.section-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: -.3px; }
+.section-sub { font-size: 11.5px; color: var(--dim); margin-bottom: 14px; }
 
-/* ── two-col ── */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+/* ── Layouts ── */
+.two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-/* ── Inline pills ── */
-.pill{font-family:'Space Mono',monospace;font-size:9px;padding:2px 7px;letter-spacing:.06em;text-transform:uppercase;}
-.pill-red{background:rgba(255,71,87,.15);color:var(--red);border:1px solid rgba(255,71,87,.3);}
-.pill-amber{background:rgba(255,165,2,.15);color:var(--amber);border:1px solid rgba(255,165,2,.3);}
-.pill-blue{background:rgba(30,144,255,.15);color:var(--blue);border:1px solid rgba(30,144,255,.3);}
-.pill-green{background:rgba(46,213,115,.15);color:var(--green);border:1px solid rgba(46,213,115,.3);}
+/* ── Pills ── */
+.pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; padding: 2px 8px;
+  letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 20px; font-weight: 600;
+}
+.pill-red   { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-border); }
+.pill-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+.pill-blue  { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-border); }
+.pill-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
 
 /* ── Animations ── */
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.fade-in{animation:fadeIn .35s ease both;}
-.spin{display:inline-block;animation:spin 1s linear infinite;}
-.pulse{animation:pulse 1.5s ease infinite;}
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin   { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes pulse  { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+.fade-in { animation: fadeIn .3s ease both; }
+.spin    { display:inline-block; animation:spin 1s linear infinite; }
+.pulse   { animation:pulse 1.5s ease infinite; }
 
 /* ── Progress ── */
-.prog-bar{height:4px;background:var(--muted);}
-.prog-fill{height:100%;background:var(--accent);transition:width .4s ease;}
+.prog-bar  { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .4s ease; }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:var(--ink);}
-::-webkit-scrollbar-thumb{background:var(--muted);}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
 
 /* ── Stepper ── */
-.stepper{
-  display:flex;align-items:center;padding:0 24px;
-  background:var(--ink);border-bottom:1px solid var(--border);
-  flex-shrink:0;height:52px;overflow:hidden;
+.stepper {
+  display: flex; align-items: center;
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; height: 56px; overflow: hidden;
 }
-.step{display:flex;align-items:center;gap:7px;flex-shrink:0;}
-.step-dot{
-  width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);
-  display:flex;align-items:center;justify-content:center;
-  font-size:12px;color:var(--dim);background:var(--panel);flex-shrink:0;
-  transition:all .3s;
+.step { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--dim);
+  background: var(--surface2); flex-shrink: 0;
+  transition: all .3s;
 }
-.step.done .step-dot{border-color:var(--green);background:rgba(46,213,115,.12);color:var(--green);font-size:10px;}
-.step.active .step-dot{border-color:var(--accent);background:rgba(255,107,53,.15);color:var(--accent);box-shadow:0 0 0 3px rgba(255,107,53,.15);}
-.step-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);white-space:nowrap;}
-.step.done .step-label{color:var(--green);}
-.step.active .step-label{color:var(--accent);}
-.step-line{flex:1;height:1px;background:var(--muted);min-width:16px;transition:background .3s;}
-.step-line.done{background:var(--green);}
+.step.done .step-dot   { border-color: var(--green); background: var(--green-bg); color: var(--green); font-size: 10px; }
+.step.active .step-dot { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+.step-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dim); white-space: nowrap;
+}
+.step.done .step-label   { color: var(--green); }
+.step.active .step-label { color: var(--accent2); }
+.step-line { flex: 1; height: 1px; background: var(--border2); min-width: 16px; transition: background .3s; }
+.step-line.done { background: var(--green); }
 
 /* ── Agent flow steps ── */
-.agent-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;}
-.agent-step{font-family:'Space Mono',monospace;font-size:9px;padding:4px 10px;border:1px solid var(--border);color:var(--dim);}
-.agent-step.active{border-color:var(--amber);color:var(--amber);background:rgba(255,165,2,.08);}
-.agent-step.done{border-color:var(--green);color:var(--green);background:rgba(46,213,115,.06);}
-.agent-step-arrow{color:var(--muted);font-size:10px;}
-
-/* ── input ── */
-.input-field{background:var(--ink);border:1px solid var(--border);color:var(--text);padding:8px 12px;font-size:12px;font-family:'Space Mono',monospace;outline:none;width:100%;}
-.input-field:focus{border-color:var(--accent);}
-.input-label{font-family:'Space Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px;}
-
-/* ── Phase transition ── */
-.phase-header{
-  display:flex;align-items:center;gap:12px;padding:10px 14px;
-  background:var(--ink);border:1px solid var(--border);border-left:3px solid var(--accent);
-  margin-bottom:10px;
+.agent-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.agent-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; padding: 4px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--dim);
 }
-.phase-icon{font-size:20px;}
-.phase-title{font-family:'DM Serif Display',serif;font-size:18px;}
-.phase-sub{font-size:11px;color:var(--dim);}
+.agent-step.active { border-color: var(--amber); color: var(--amber); background: var(--amber-bg); }
+.agent-step.done   { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+.agent-step-arrow  { color: var(--border2); font-size: 10px; }
+
+/* ── Input ── */
+.input-field {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none; width: 100%;
+  transition: border-color .15s;
+}
+.input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
+.input-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase;
+  display: block; margin-bottom: 5px;
+}
+
+/* ── Phase header ── */
+.phase-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.phase-icon  { font-size: 22px; }
+.phase-title { font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+.phase-sub   { font-size: 11.5px; color: var(--dim); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -419,7 +598,7 @@ function LogPanel({logs}) {
             <span style={{fontSize:11, color:'var(--dim)'}}>✕</span>
           </>
         ) : (
-          <span title="Show agent logs" style={{fontSize:14, writingMode:'vertical-rl', transform:'rotate(180deg)', color:'var(--dim)', letterSpacing:'.08em', fontFamily:"'Space Mono',monospace", fontSize:'9px', textTransform:'uppercase'}}>
+          <span title="Show agent logs" style={{fontSize:14, writingMode:'vertical-rl', transform:'rotate(180deg)', color:'var(--dim)', letterSpacing:'.08em', fontFamily:"'JetBrains Mono',monospace", fontSize:'9px', textTransform:'uppercase'}}>
             Logs {logs.length > 0 ? `(${logs.length})` : ''}
           </span>
         )}
@@ -454,14 +633,16 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
           <div key={id}
             onClick={()=>{ if(id!==activeProduct) onProductChange(id); }}
             style={{
-              padding:'12px 16px', cursor:'pointer', transition:'all .2s',
-              border: id===activeProduct ? '2px solid var(--accent)' : '2px solid var(--border)',
-              background: id===activeProduct ? 'rgba(255,107,53,.08)' : 'var(--panel)',
+              padding:'14px 18px', cursor:'pointer', transition:'all .2s',
+              border: id===activeProduct ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
+              borderRadius:'10px',
+              background: id===activeProduct ? 'var(--accent-bg)' : 'var(--surface)',
               display:'flex', alignItems:'center', gap:12,
+              boxShadow: id===activeProduct ? '0 0 0 1px rgba(59,130,246,.3),0 4px 14px rgba(59,130,246,.12)' : '0 1px 3px rgba(0,0,0,.3)',
             }}>
             <div style={{fontSize:24,flexShrink:0}}>{p.icon}</div>
             <div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:14,color: id===activeProduct?'var(--accent)':'var(--text)'}}>{p.label}</div>
+              <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:14,fontWeight:600,color: id===activeProduct?'var(--accent2)':'var(--text)'}}>{p.label}</div>
               <div style={{fontSize:'10px',color:'var(--dim)',marginTop:2}}>{p.description}</div>
             </div>
             {id===activeProduct && <span className="badge badge-live" style={{marginLeft:'auto',flexShrink:0}}>ACTIVE</span>}
@@ -488,7 +669,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
 
         {/* JIRA URL input row */}
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <span style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)',whiteSpace:'nowrap',letterSpacing:'.06em'}}>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)',whiteSpace:'nowrap',letterSpacing:'.06em'}}>
             JIRA BACKLOG URL
           </span>
           <div style={{flex:1,position:'relative'}}>
@@ -502,8 +683,8 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
             <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:'11px',pointerEvents:'none'}}>🔗</span>
           </div>
           <a href={jiraUrl} target="_blank" rel="noopener noreferrer"
-            style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--blue)',textDecoration:'none',
-                    padding:'7px 12px',border:'1px solid rgba(30,144,255,.35)',whiteSpace:'nowrap',flexShrink:0}}>
+            style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--blue)',textDecoration:'none',
+                    padding:'7px 12px',border:'1px solid var(--blue-border)',borderRadius:'6px',whiteSpace:'nowrap',flexShrink:0}}>
             Open ↗
           </a>
         </div>
@@ -511,7 +692,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
 
       {logs.length > 0 && (
         <div className="fade-in">
-          <div style={{marginBottom:8,fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
+          <div style={{marginBottom:8,fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
             {jiraItems.length} blocker items · Click a ticket to trace its repository
           </div>
           <div className="jira-grid">
@@ -526,11 +707,11 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
                 <div className="jira-title">{item.title}</div>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
                   <a href={jiraIssueUrl(item.key, project.key)} target="_blank" rel="noopener noreferrer"
-                    style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
+                    style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
                     onClick={e=>e.stopPropagation()}>
                     🔗 Open ticket
                   </a>
-                  <span style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>{item.points}pts</span>
+                  <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>{item.points}pts</span>
                 </div>
               </div>
             ))}
@@ -548,7 +729,7 @@ function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}
     <div className="fade-in">
       <div className="card" style={{marginBottom:14}}>
         <div className="card-head" style={{padding:'14px 18px'}}>
-          <span style={{fontFamily:"'DM Serif Display',serif",fontSize:20,color:'var(--text)',letterSpacing:'.01em'}}>
+          <span style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:20,color:'var(--text)',letterSpacing:'.01em'}}>
             📁 Linked Repository
           </span>
           <span className="badge badge-live" style={{marginLeft:'auto'}}>LOADED</span>
@@ -561,8 +742,8 @@ function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}
               <div style={{fontSize:'10px',color:'var(--dim)'}}>{repo?.description}</div>
             </div>
             <div style={{marginLeft:'auto',textAlign:'right'}}>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.language}</div>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.files} files · last commit {repo?.lastCommit}</div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.language}</div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.files} files · last commit {repo?.lastCommit}</div>
             </div>
           </div>
           <div style={{marginTop:12}}>
@@ -593,8 +774,8 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
           <div className="phase-sub">AI-identified technical debt across linked repositories. Select items to include in cost calculation.</div>
         </div>
         <div style={{marginLeft:'auto',textAlign:'right'}}>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>SELECTED ANNUAL COST</div>
-          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'22px',color:'var(--red)'}}>{fmt(total)}</div>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>SELECTED ANNUAL COST</div>
+          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:'22px',color:'var(--red)'}}>{fmt(total)}</div>
         </div>
       </div>
 
@@ -607,14 +788,14 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
             <div className="debt-info">
               <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
                 <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span>
-                <span style={{fontFamily:"'Space Mono',monospace",fontSize:'10px',fontWeight:700,color: d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)'}}>{d.type}</span>
+                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',fontWeight:700,color: d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)'}}>{d.type}</span>
               </div>
               <div style={{fontSize:'14px',color:'var(--text)',lineHeight:1.6}}>{d.description}</div>
             </div>
             <div className="debt-cost-tag" style={{textAlign:'right',whiteSpace:'nowrap'}}>
               <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>if left unfixed</div>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>{d.fix_weeks}w to fix</div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>if left unfixed</div>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>{d.fix_weeks}w to fix</div>
             </div>
           </div>
         ))}
@@ -693,7 +874,7 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
             </div>
           ))}
           <div style={{marginTop:12,fontSize:'11px',color:'var(--red)',lineHeight:1.9}}>
-            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT HAPPENS NEXT</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT HAPPENS NEXT</div>
             {nego.optA_items.map((item,i)=><div key={i}>✗ {item}</div>)}
             <div>✗ {fmt(costData.annual_savings)}/yr in debt costs keep compounding</div>
           </div>
@@ -714,7 +895,7 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
             </div>
           ))}
           <div style={{marginTop:12,fontSize:'11px',color:'var(--green)',lineHeight:1.9}}>
-            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT YOU UNLOCK</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:6,letterSpacing:'.08em'}}>WHAT YOU UNLOCK</div>
             {nego.optB_items.map((item,i)=><div key={i}>✓ {item}</div>)}
             <div>✓ {fmt(costData.annual_savings)}/yr saved — all {jiraCount} features ship cleanly</div>
           </div>
@@ -734,17 +915,17 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
             {label:'If Option A fails',val:'Refactor anyway',note:`Both paths combined = ${costData.effort_weeks+16}w & double the cost`,cls:'red'},
             {label:'First-year net gain',val:fmt(costData.annual_savings - costData.refactoring_cost),note:`after paying back the ${fmt(costData.refactoring_cost)} investment`,cls:'green'},
           ].map((t,i)=>(
-            <div key={i} style={{padding:'10px 14px',background:'var(--ink)'}}>
-              <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:3,letterSpacing:'.06em'}}>{t.label.toUpperCase()}</div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:'15px',color:`var(--${t.cls})`}}>{t.val}</div>
+            <div key={i} style={{padding:'10px 14px',background:'var(--surface2)'}}>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',marginBottom:3,letterSpacing:'.06em'}}>{t.label.toUpperCase()}</div>
+              <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:'15px',color:`var(--${t.cls})`}}>{t.val}</div>
               <div style={{fontSize:'10px',color:'var(--dim)',marginTop:2}}>{t.note}</div>
             </div>
           ))}
         </div>
 
         {/* Confidence signal */}
-        <div style={{padding:'10px 14px',border:'1px solid rgba(46,213,115,.2)',background:'rgba(46,213,115,.04)'}}>
-          <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',letterSpacing:'.08em',marginBottom:4}}>WHY THIS IS A CLEAR CALL, NOT A CLOSE CALL</div>
+        <div style={{padding:'10px 14px',border:'1px solid var(--green-border)',background:'var(--green-bg)',borderRadius:'8px'}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',letterSpacing:'.08em',marginBottom:4}}>WHY THIS IS A CLEAR CALL, NOT A CLOSE CALL</div>
           <div style={{fontSize:'11px',color:'var(--soft)',lineHeight:1.7}}>
             The gap between Option A (35%) and Option B (92%) is <strong style={{color:'var(--text)'}}>57 percentage points</strong> — well above the 15-point threshold where the choice becomes a judgement call. Option A's 8-week promise is misleading: with a 65% regression rate on this codebase, history shows the real timeline becomes 16 weeks or more once debugging and rollbacks are counted. Option B delivers in <strong style={{color:'var(--text)'}}>{costData.effort_weeks+4} weeks with one predictable schedule</strong> and no hidden rework. The only scenario where Option A wins is if the debt is low-severity and the team is confident the workarounds hold — neither is true here.
           </div>
@@ -798,7 +979,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
       </div>
 
       <div style={{marginBottom:14}}>
-        <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:8}}>
           Selected Debt Items ({debts.length})
         </div>
         {debts.map(d=>(
@@ -815,11 +996,11 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
         ))}
       </div>
 
-      <div style={{padding:'14px 16px',background:'var(--panel)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-around',flexWrap:'wrap',gap:16}}>
+      <div style={{padding:'14px 16px',background:'var(--surface)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-around',flexWrap:'wrap',gap:16}}>
         {[['🎫','JIRA Fetcher'],['📁','Repo Scanner'],['🤖','Debt Analyzer'],['💰','Cost Model'],['⚖️','Negotiator']].map(([icon,label],i)=>(
           <div key={i} style={{textAlign:'center'}}>
             <div style={{fontSize:'24px'}}>{icon}</div>
-            <div style={{fontFamily:"'Space Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>✓ {label}</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>✓ {label}</div>
           </div>
         ))}
       </div>
