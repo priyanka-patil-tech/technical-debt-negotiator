@@ -381,6 +381,9 @@ body {
 .step.active .step-label { color: var(--accent2); }
 .step-line { flex: 1; height: 1px; background: var(--border2); min-width: 16px; transition: background .3s; }
 .step-line.done { background: var(--green); }
+.step.clickable { cursor: pointer; border-radius: var(--radius-sm); padding: 4px 6px; margin: -4px -6px; transition: background .18s; }
+.step.clickable:hover .step-dot { border-color: var(--accent); background: var(--accent-bg); color: var(--accent2); }
+.step.clickable:hover .step-label { color: var(--accent2); }
 
 /* ── Agent flow steps ── */
 .agent-steps { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
@@ -628,7 +631,7 @@ const STEPS = [
 ];
 const PHASE_ORDER = STEPS.map(s=>s.id);
 
-function Stepper({phase}) {
+function Stepper({phase, onGoTo}) {
   const current = PHASE_ORDER.indexOf(phase);
   return (
     <div className="stepper">
@@ -637,7 +640,11 @@ function Stepper({phase}) {
         const active = i === current;
         return (
           <React.Fragment key={s.id}>
-            <div className={`step ${done?'done':''} ${active?'active':''}`}>
+            <div
+              className={`step ${done?'done':''} ${active?'active':''} ${done?'clickable':''}`}
+              onClick={done ? () => onGoTo(s.id) : undefined}
+              title={done ? `← Back to ${s.label}` : undefined}
+            >
               <div className="step-dot">{done ? '✓' : s.icon}</div>
               <div className="step-label">{s.label}</div>
             </div>
@@ -836,7 +843,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
 }
 
 // ── Phase 2: Repository ───────────────────────────────────────────────────
-function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}) {
+function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned, onContinue}) {
   const repo = repoData[repoName];
   return (
     <div className="fade-in">
@@ -866,9 +873,13 @@ function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}
         </div>
       </div>
 
-      {!scanned && (
+      {!scanned ? (
         <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
           {scanning ? <><span className="spin">⟳</span> Scanning…</> : '🔍 Scan Repositories'}
+        </button>
+      ) : (
+        <button className="btn btn-secondary btn-block" onClick={onContinue}>
+          → Continue to Debt Analysis
         </button>
       )}
     </div>
@@ -876,7 +887,7 @@ function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned}
 }
 
 // ── Phase 3: Debt Items ───────────────────────────────────────────────────
-function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
+function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData, onContinue}) {
   const total = debts.filter(d=>selected.includes(d.id)).reduce((s,d)=>s+d.annual_cost,0);
   return (
     <div className="fade-in">
@@ -914,9 +925,13 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
         ))}
       </div>
 
-      {!costData && (
+      {!costData ? (
         <button className="btn btn-primary btn-block" onClick={onCalc} disabled={calculating||selected.length===0}>
           {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Effort & Cost (${selected.length} items selected)`}
+        </button>
+      ) : (
+        <button className="btn btn-secondary btn-block" onClick={onContinue}>
+          → Continue to Cost Analysis
         </button>
       )}
     </div>
@@ -924,7 +939,7 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData}) {
 }
 
 // ── Phase 4: Cost Preview (Live) ──────────────────────────────────────────
-function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation}) {
+function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation, onContinue}) {
   return (
     <div className="fade-in">
       <div className="phase-header">
@@ -952,9 +967,13 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
         ))}
       </div>
 
-      {!negotiation && (
+      {!negotiation ? (
         <button className="btn btn-blue btn-block" onClick={onNegotiate} disabled={negotiating}>
           {negotiating ? <><span className="spin">⟳</span> Running Negotiation Agent…</> : '⚖️ Run Negotiations'}
+        </button>
+      ) : (
+        <button className="btn btn-secondary btn-block" onClick={onContinue}>
+          → Continue to Negotiation
         </button>
       )}
     </div>
@@ -1337,15 +1356,15 @@ function App() {
         </div>
       </div>
 
-      {phase !== 'landing' && <Stepper phase={phase}/>}
+      {phase !== 'landing' && <Stepper phase={phase} onGoTo={setPhase}/>}
 
       <div className="body-layout">
         <div className="main-area">
           {phase==='landing'   && <PhaseLanding onSelectProduct={selectProductFromLanding}/>}
           {phase==='jira'      && <PhaseJira onSelect={selectJira} selectedItem={selectedJira} logs={logs} running={jiraLoading} onLoad={loadJira} activeProduct={activeProduct} onProductChange={onProductChange} jiraItems={activeJiraItems} project={activeProject}/>}
-          {phase==='repo'      && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} repoData={activeRepoData} onScan={scanRepo} scanning={scanning} scanned={scanned}/>}
-          {phase==='debt'      && <PhaseDebt debts={activeDebts} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData}/>}
-          {phase==='cost'      && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={activeDebts} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation}/>}
+          {phase==='repo'      && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} repoData={activeRepoData} onScan={scanRepo} scanning={scanning} scanned={scanned} onContinue={()=>setPhase('debt')}/>}
+          {phase==='debt'      && <PhaseDebt debts={activeDebts} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData} onContinue={()=>setPhase('cost')}/>}
+          {phase==='cost'      && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={activeDebts} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation} onContinue={()=>setPhase('nego')}/>}
           {phase==='nego'      && <PhaseNego negotiation={negotiation} costData={costData} nego={product.nego} jiraCount={activeJiraItems.length} onDashboard={()=>setPhase('dashboard')}/>}
           {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} nego={product.nego} jiraItems={activeJiraItems}/>}
         </div>
