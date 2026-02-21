@@ -617,6 +617,64 @@ const PRODUCTS_DATA = {
     },
   },
 
+  'analytics-pipeline': {
+    icon: '📈',
+    label: 'Analytics Pipeline',
+    description: 'Real-time event streaming & batch reporting infrastructure',
+    project: { name:'Analytics Pipeline', key:'AP', id:'AP-3001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/AP/boards/backlog' },
+    jiraItems: [
+      { key:'AP-3001', title:'Kafka consumer running 3 versions simultaneously — v1 still handles 40% of traffic, nobody dares shut it down', priority:'critical', repo:'kafka-stream-processor', points:13 },
+      { key:'AP-3002', title:'Daily revenue report takes 14 hours — business is making decisions on yesterday\'s data every single day', priority:'critical', repo:'revenue-calculator', points:21 },
+      { key:'AP-3003', title:'SQL injection in revenue-calculator.py — user input hits the production database unsanitised', priority:'critical', repo:'revenue-calculator', points:13 },
+      { key:'AP-3004', title:'5 ETL pipeline versions active in Airflow — team doesn\'t know which one is canonical or if they overlap', priority:'high', repo:'airflow-pipeline-service', points:8 },
+    ],
+    repoData: {
+      'kafka-stream-processor': {
+        name:'kafka-stream-processor', description:'Real-time event ingestion & Kafka consumer layer',
+        language:'Python / Kafka / Flink', files:94, stars:41, lastCommit:'5 days ago',
+        debts:[
+          { id:'AP1', severity:'critical', type:'Triple Kafka Consumer', description:'Three separate versions of the event consumer are running simultaneously, all reading from the same Kafka topics. Version 1 still handles 40% of live traffic because nobody is confident enough to shut it down. Every event is processed two to three times, producing duplicate records in downstream reports. This is the same fear-driven architecture LinkedIn documented publicly — where the cost of change feels higher than the cost of running broken infrastructure forever.', annual_cost:312000, fix_weeks:5 },
+          { id:'AP2', severity:'medium', type:'Alert Fatigue — 400 Emails a Day', description:'The monitoring system sends over 400 alert emails per day. Every engineer has created inbox rules to auto-archive them. When a real incident occurs — a pipeline failure, a data quality drop, a processing backlog — the alert arrives alongside 399 others and is not acted on until the business reports a problem hours later. PagerDuty documented this exact failure mode: alert volume destroys alert value.', annual_cost:95000, fix_weeks:2 },
+        ]
+      },
+      'revenue-calculator': {
+        name:'revenue-calculator', description:'Daily revenue reporting & SQL aggregation engine',
+        language:'Python / PostgreSQL / Airflow', files:58, stars:17, lastCommit:'1 day ago',
+        debts:[
+          { id:'AP3', severity:'critical', type:'SQL Injection in Revenue Pipeline', description:'revenue-calculator.py builds database queries by dropping user input directly into f-strings, with no sanitisation. Any value passed through the reporting API can execute arbitrary SQL against the production database. This is the same attack vector used in Uber\'s analytics data breach. The fix takes one week — but every day it remains open is a day the entire revenue dataset is exposed to a single crafted request.', annual_cost:450000, fix_weeks:2 },
+          { id:'AP4', severity:'critical', type:'14-Hour Job That Should Take 2 Hours', description:'The daily report generator scans the entire database without indexing, recalculates fields that have not changed, and writes results row-by-row with no batching. A job that should complete in 2 hours now runs for 14, blocking every downstream pipeline and delaying all business reporting until mid-afternoon. Airbnb documented the same pattern in their early ETL architecture — and fixed it in two weeks once they prioritised it.', annual_cost:280000, fix_weeks:4 },
+          { id:'AP5', severity:'medium', type:'Ancient Dependencies Blocking Innovation', description:'The pipeline runs on Pandas 0.25.3 (released 2019, current is 2.2.x) and PySpark 2.4.0 (current is 3.5.x). Every modern data library — DuckDB, Polars, the current scikit-learn — requires versions incompatible with these. New engineers spend their first week finding workarounds for missing functions. Any initiative requiring modern tooling is blocked before it starts.', annual_cost:130000, fix_weeks:3 },
+        ]
+      },
+      'airflow-pipeline-service': {
+        name:'airflow-pipeline-service', description:'Airflow DAG orchestration & ETL pipeline management',
+        language:'Python / Airflow / S3', files:121, stars:29, lastCommit:'9 days ago',
+        debts:[
+          { id:'AP6', severity:'high', type:'DAG Version Sprawl — 5 ETL Pipelines', description:'There are five different files named some variation of etl_pipeline in the Airflow DAGs folder. All five are active. The team does not know which version is canonical, which runs first, or whether their outputs overlap. Debugging any data discrepancy requires checking all five DAGs, which takes four times longer than it should. Spotify called this exact pattern Airflow spaghetti in their engineering blog — and it took a full quarter to untangle.', annual_cost:195000, fix_weeks:4 },
+          { id:'AP7', severity:'high', type:'Storage Hoarding — 12 TB of Unidentified Data', description:'A folder called archive/ holds 12 TB of data. Nobody on the current team knows what it contains, when it was last accessed, or whether it is safe to delete. There is no data retention policy. Netflix\'s S3 cleanup project found similar zombie data and saved over $1M per year. This archive costs $18,000 per month in S3 fees for data that may have zero business value and cannot be audited for compliance.', annual_cost:216000, fix_weeks:3 },
+        ]
+      },
+    },
+    nego: {
+      optA_items: [
+        'Kafka v1 still running — every event processed 3x, duplicate data in all downstream reports',
+        'SQL injection unpatched — one crafted API call away from a full revenue database breach',
+        'Daily reports still 14 hours late — business decisions made on yesterday\'s numbers every day',
+        'Five ETL pipelines still active — every data question takes 2 days to trace to a source',
+        '$18K/month in unidentified S3 storage keeps compounding with no audit trail',
+      ],
+      optB_items: [
+        'Single Kafka consumer — 3x infra cost eliminated, clean data lineage end-to-end',
+        'SQL injection patched — revenue calculator secured, compliance audit ready',
+        'Daily reports complete in 2 hours — business runs on same-day data',
+        'One canonical ETL pipeline — debugging 4x faster, no accidental duplicate processing',
+        '12 TB archive audited — zombie storage eliminated, data governance baseline established',
+      ],
+      dashFinalTitle: 'Refactor Analytics Infrastructure First',
+      dashNote: 'Triple Kafka consumers and an unpatched SQL injection in revenue-calculator are directly blocking all pipeline improvements. Building on current infrastructure = live data breach exposure + 14-hour reporting delays compounding every single day. Refactoring eliminates the breach risk, halves reporting time, and cuts infrastructure cost —',
+    },
+  },
+
 };
 
 
