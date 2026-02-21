@@ -471,19 +471,37 @@ body {
 }
 .product-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 24px 22px;
+  border-radius: 16px; padding: 0;
   cursor: pointer; transition: all .22s ease; text-align: left;
-  display: flex; flex-direction: column; gap: 10px;
-  box-shadow: var(--shadow);
+  display: flex; flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0,0,0,.35);
+  overflow: hidden;
 }
 .product-card:hover {
-  border-color: var(--accent); background: var(--surface2);
+  border-color: rgba(255,255,255,.15);
   transform: translateY(-3px);
-  box-shadow: var(--shadow-md), 0 0 0 1px rgba(59,130,246,.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,.45);
 }
-.product-card-icon { font-size: 34px; line-height: 1; margin-bottom: 2px; }
-.product-card-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.2px; }
-.product-card-desc { font-size: 12px; color: var(--dim); line-height: 1.55; }
+.product-card-header {
+  padding: 20px 22px;
+  display: flex; align-items: center; gap: 12px;
+}
+.product-card-icon { font-size: 30px; line-height: 1; flex-shrink: 0; }
+.product-card-name { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -.25px; line-height: 1.25; }
+.product-card-tag {
+  margin-left: auto; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(255,255,255,.8); background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.28);
+  padding: 3px 10px; border-radius: 100px;
+}
+.product-card-body {
+  padding: 18px 22px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 1;
+}
+.product-card-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
 .product-card-stats {
   display: flex; gap: 16px; padding-top: 14px;
   border-top: 1px solid var(--border); margin-top: 4px;
@@ -511,6 +529,7 @@ const PRODUCTS_DATA = {
 
   'fraud-detection': {
     icon: '🤖',
+    gradient: 'linear-gradient(135deg, #1d4ed8, #4f46e5)',
     label: 'Fraud Detection ML Platform',
     description: 'ML pipeline powering real-time fraud detection',
     project: { name:'Fraud Detection ML Platform', key:'ML', id:'ML-1401', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/ML/boards/backlog' },
@@ -581,6 +600,7 @@ const PRODUCTS_DATA = {
 
   'payment-platform': {
     icon: '💳',
+    gradient: 'linear-gradient(135deg, #065f46, #0891b2)',
     label: 'Payment Platform',
     description: 'Core payment processing & checkout infrastructure',
     project: { name:'Payment Platform', key:'PAY', id:'PAY-2001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/PAY/boards/backlog' },
@@ -637,6 +657,7 @@ const PRODUCTS_DATA = {
 
   'analytics-pipeline': {
     icon: '📈',
+    gradient: 'linear-gradient(135deg, #c2410c, #db2777)',
     label: 'Analytics Pipeline',
     description: 'Real-time event streaming & batch reporting infrastructure',
     project: { name:'Analytics Pipeline', key:'AP', id:'AP-3001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/AP/boards/backlog' },
@@ -818,23 +839,26 @@ function PhaseLanding({ onSelectProduct }) {
           const stats = getStats(p);
           return (
             <div key={id} className="product-card" onClick={() => onSelectProduct(id)}>
-              <div className="product-card-icon">{p.icon}</div>
-              <div>
+              <div className="product-card-header" style={{background: p.gradient}}>
+                <div className="product-card-icon">{p.icon}</div>
                 <div className="product-card-name">{p.label}</div>
+                <div className="product-card-tag">Scenario {Object.keys(PRODUCTS_DATA).indexOf(id)+1} of {Object.keys(PRODUCTS_DATA).length}</div>
+              </div>
+              <div className="product-card-body">
                 <div className="product-card-desc">{p.description}</div>
+                <div className="product-card-stats">
+                  <div className="product-stat">
+                    <strong>{stats.count}</strong>debt items
+                  </div>
+                  <div className="product-stat">
+                    <strong>{stats.critical}</strong>critical
+                  </div>
+                  <div className="product-stat">
+                    <strong>${(stats.totalCost / 1e6).toFixed(1)}M</strong>annual cost
+                  </div>
+                </div>
+                <div className="product-card-cta">Start analysis →</div>
               </div>
-              <div className="product-card-stats">
-                <div className="product-stat">
-                  <strong>{stats.count}</strong>debt items
-                </div>
-                <div className="product-stat">
-                  <strong>{stats.critical}</strong>critical
-                </div>
-                <div className="product-stat">
-                  <strong>${(stats.totalCost / 1e6).toFixed(1)}M</strong>annual cost
-                </div>
-              </div>
-              <div className="product-card-cta">Start analysis →</div>
             </div>
           );
         })}
