@@ -1107,7 +1107,7 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
       {/* Recommendation */}
       <div className="rec-box" style={{marginBottom:14}}>
         <div className="rec-label">✓ AGENT RECOMMENDATION</div>
-        <div className="rec-title">Refactor First — Then Ship All {jiraCount} Features</div>
+        <div className="rec-title">Refactor First — Then Ship Features</div>
         <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
@@ -1172,7 +1172,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
       {/* Recommendation */}
       <div className="rec-box" style={{marginBottom:16}}>
         <div className="rec-label">✓ RECOMMENDATION</div>
-        <div className="rec-title" style={{fontSize:'17px',marginBottom:6}}>{nego.dashFinalTitle} — Ship All {jiraItems.length} Features by Week 16</div>
+        <div className="rec-title" style={{fontSize:'17px',marginBottom:6}}>{nego.dashFinalTitle} — Ship Features by Week 16</div>
         <div className="rec-body">
           This platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
           {' '}{nego.dashNote} with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
