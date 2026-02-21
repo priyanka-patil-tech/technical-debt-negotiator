@@ -352,6 +352,60 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
 
+/* ── Responsive (mobile) ── */
+@media (max-width: 768px) {
+  /* Enable vertical page scroll */
+  html, body { height: auto; overflow-x: hidden; }
+  .shell { height: auto; min-height: 100dvh; overflow: visible; }
+  .body-layout { flex-direction: column; overflow: visible; height: auto; }
+  .main-area { overflow: visible; height: auto; padding: 12px 14px; }
+
+  /* Hide log panel */
+  .log-panel { display: none !important; }
+
+  /* Topbar */
+  .topbar { height: auto; min-height: 48px; padding: 8px 14px; flex-wrap: wrap; gap: 6px; }
+
+  /* Stepper — horizontal scroll, hide text labels to save space */
+  .stepper { overflow-x: auto; height: auto; min-height: 52px; padding: 0 10px; }
+  .step-label { display: none; }
+  .step-line { min-width: 8px; }
+
+  /* Landing */
+  .landing { padding: 24px 16px; }
+  .landing-title { font-size: 28px; letter-spacing: -.4px; }
+  .landing-sub { font-size: 13px; }
+  .product-grid { grid-template-columns: 1fr; }
+
+  /* Grids → collapse */
+  .jira-grid     { grid-template-columns: 1fr; }
+  .two-col       { grid-template-columns: 1fr; }
+  .three-col     { grid-template-columns: 1fr 1fr; }
+  .nego-grid     { grid-template-columns: 1fr; }
+  .nego-vs       { padding-top: 0; text-align: left; }
+
+  /* Inline-styled grids — overridden via classNames added in JSX */
+  .dash-kpi-row      { grid-template-columns: repeat(2, 1fr) !important; }
+  .nego-bullets-grid { grid-template-columns: 1fr !important; }
+
+  /* JIRA URL row — allow wrapping */
+  .jira-url-row { flex-wrap: wrap; }
+  .jira-url-row > a { flex: 1; text-align: center; }
+
+  /* Phase header top row — button wraps below title on small screens */
+  .phase-header-top { flex-wrap: wrap; }
+  .phase-header-top .btn { flex: 1 0 100%; margin-top: 8px; justify-content: center; }
+
+  /* Phase header — allow cost display to wrap */
+  .phase-header { flex-wrap: wrap; }
+
+  /* Debt list — remove fixed height so page scrolls naturally */
+  .debt-list { max-height: none !important; overflow-y: visible !important; }
+
+  /* Buttons */
+  .btn { min-height: 40px; }
+}
+
 /* ── Stepper ── */
 .stepper {
   display: flex; align-items: center;
@@ -881,7 +935,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
 
       <div className="phase-header" style={{flexDirection:'column',alignItems:'stretch',gap:14,padding:'18px 20px'}}>
         {/* Top row: icon + title + button */}
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div className="phase-header-top" style={{display:'flex',alignItems:'center',gap:12}}>
           <div className="phase-icon" style={{fontSize:24}}>🎫</div>
           <div style={{flex:1}}>
             <div className="phase-title" style={{fontSize:20}}>{project.id} — {project.name}</div>
@@ -897,7 +951,7 @@ function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct
         </div>
 
         {/* JIRA URL input row */}
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div className="jira-url-row" style={{display:'flex',alignItems:'center',gap:10}}>
           <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)',whiteSpace:'nowrap',letterSpacing:'.06em'}}>
             JIRA BACKLOG URL
           </span>
@@ -1012,7 +1066,7 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData, on
         </div>
       </div>
 
-      <div style={{maxHeight:'calc(100vh - 380px)',overflowY:'auto',marginBottom:14}}>
+      <div className="debt-list" style={{maxHeight:'calc(100vh - 380px)',overflowY:'auto',marginBottom:14}}>
         {debts.map(d=>(
           <div key={d.id} className={`debt-row ${d.severity}`}>
             <input type="checkbox" className="debt-checkbox"
@@ -1134,7 +1188,7 @@ function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
         <div className="rec-title">Refactor First — Then Ship Features</div>
         <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
 
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div className="nego-bullets-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           <div>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>IF YOU BUILD NOW</div>
             {nego.optA_items.slice(0,3).map((item,i)=>(
@@ -1177,7 +1231,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
       </div>
 
       {/* KPI row */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
+      <div className="dash-kpi-row" style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:16}}>
         {[
           {label:'Annual Debt Cost',    val:fmt(costData.annual_savings),             cls:'red',   sub:'if left unfixed'},
           {label:'Fix Investment',      val:fmt(costData.refactoring_cost),            cls:'amber', sub:`${costData.effort_weeks}w · 4 engineers`},
