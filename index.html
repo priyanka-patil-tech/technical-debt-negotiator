@@ -354,15 +354,17 @@ body {
 
 /* ── Responsive (mobile) ── */
 @media (max-width: 768px) {
-  /* Topbar + stepper stay fixed; .main-area scrolls inside the shell.
-     This mirrors how desktop works — no fighting with html/body overflow. */
-  .body-layout { flex-direction: column; overflow: hidden; }
+  /* Shell scrolls via .main-area; body-layout is a plain flex column */
+  .body-layout { flex-direction: column; }
   .main-area {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 12px 14px 160px; /* clear action bar (60px) + bottom nav (52px) + gap */
+    padding: 12px 14px 130px; /* clear fixed action bar + bottom nav */
   }
+  /* PhaseFeatures: flatten internal scroll — main-area handles it */
+  .features-wrap { display: block !important; height: auto !important; }
+  .features-body { flex: none !important; overflow-y: visible !important; }
 
   /* Hide log panel */
   .log-panel { display: none !important; }
@@ -380,7 +382,8 @@ body {
   .step-label { display: none; }
   .step-line { min-width: 8px; }
 
-  /* Landing */
+  /* Landing — no bottom nav, so reset the main-area padding override */
+  .main-area:has(.landing) { padding-bottom: 24px; }
   .landing { padding: 20px 14px; }
   .landing-title { font-size: 28px; letter-spacing: -.4px; }
   .landing-sub { font-size: 13px; margin-bottom: 16px; }
@@ -511,6 +514,9 @@ body {
 }
 .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
 .phase-action-bar { flex-shrink: 0; padding-top: 12px; padding-bottom: 4px; }
+/* Desktop: PhaseFeatures fills panel height; button pinned at bottom via flex */
+.features-wrap { display: flex; flex-direction: column; height: 100%; }
+.features-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .input-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase;
@@ -960,10 +966,10 @@ function jiraIssueUrl(key, projectKey) {
 // ── Phase 1: Features & Repository ───────────────────────────────────────
 function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned, onContinue}) {
   return (
-    <div className="fade-in" style={{display:'flex', flexDirection:'column', height:'100%'}}>
+    <div className="fade-in features-wrap">
 
-      {/* Scrollable content */}
-      <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch'}}>
+      {/* Content — scrolls via .main-area on mobile, inner div on desktop */}
+      <div className="features-body">
 
         <div className="phase-header" style={{marginBottom:14}}>
           <div className="phase-icon">🎫</div>
@@ -1099,15 +1105,17 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData, on
         ))}
       </div>
 
-      {!costData ? (
-        <button className="btn btn-primary btn-block" onClick={onCalc} disabled={calculating||selected.length===0}>
-          {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Cost & Decision (${selected.length} items selected)`}
-        </button>
-      ) : (
-        <button className="btn btn-secondary btn-block" onClick={onContinue}>
-          → Continue to Decision
-        </button>
-      )}
+      <div className="phase-action-bar">
+        {!costData ? (
+          <button className="btn btn-primary btn-block" onClick={onCalc} disabled={calculating||selected.length===0}>
+            {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Cost & Decision (${selected.length} items selected)`}
+          </button>
+        ) : (
+          <button className="btn btn-secondary btn-block" onClick={onContinue}>
+            → Continue to Decision
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -1146,19 +1154,15 @@ function PhaseDecision({costData, onNegotiate, negotiating, negotiation, nego, o
       <div style={{borderTop:'1px solid var(--border)',marginBottom:14}}/>
 
       {!negotiation ? (
-        /* ── Pre-negotiation: show button ── */
-        <div style={{textAlign:'center',padding:'24px 0'}}>
-          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:12}}>
-            Ready to model both paths?
-          </div>
+        /* ── Pre-negotiation ── */
+        <div className="phase-action-bar">
           <button className="btn btn-blue btn-block" onClick={onNegotiate} disabled={negotiating}>
             {negotiating ? <><span className="spin">⟳</span> Running Negotiation Agent…</> : '⚖️ Run Negotiations — Refactor vs Build Now'}
           </button>
         </div>
       ) : (
-        /* ── Post-negotiation: show full comparison + recommendation ── */
+        /* ── Post-negotiation: comparison + recommendation + CTA ── */
         <div>
-          {/* Option A vs B */}
           <div className="nego-grid" style={{marginBottom:14}}>
             <div className="nego-card opt-a">
               <div className="nego-card-label a">OPTION A</div>
@@ -1182,8 +1186,6 @@ function PhaseDecision({costData, onNegotiate, negotiating, negotiation, nego, o
               ))}
             </div>
           </div>
-
-          {/* Recommendation */}
           <div className="rec-box" style={{marginBottom:14}}>
             <div className="rec-label">✓ AGENT RECOMMENDATION</div>
             <div className="rec-title">Refactor First — Then Ship Features</div>
@@ -1203,10 +1205,11 @@ function PhaseDecision({costData, onNegotiate, negotiating, negotiation, nego, o
               </div>
             </div>
           </div>
-
-          <button className="btn btn-success btn-block" onClick={onDashboard}>
-            📊 View Final Report →
-          </button>
+          <div className="phase-action-bar">
+            <button className="btn btn-success btn-block" onClick={onDashboard}>
+              📊 View Final Report →
+            </button>
+          </div>
         </div>
       )}
     </div>
