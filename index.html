@@ -1031,7 +1031,7 @@ function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData, on
                 <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span>
                 <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',fontWeight:700,color: d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)'}}>{d.type}</span>
               </div>
-              <div style={{fontSize:'14px',color:'var(--text)',lineHeight:1.6}}>{d.description}</div>
+              <div style={{fontSize:'12px',color:'var(--text)',lineHeight:1.5}}>{d.description}</div>
             </div>
             <div className="debt-cost-tag" style={{textAlign:'right',whiteSpace:'nowrap'}}>
               <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
