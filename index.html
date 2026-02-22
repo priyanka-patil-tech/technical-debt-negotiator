@@ -795,8 +795,7 @@ const PRODUCTS_DATA = {
 
 // ── Stepper ───────────────────────────────────────────────────────────────
 const STEPS = [
-  {id:'jira',      icon:'🎫', label:'JIRA Backlog'},
-  {id:'repo',      icon:'📁', label:'Repository'},
+  {id:'features',  icon:'🎫', label:'Features & Repo'},
   {id:'debt',      icon:'🤖', label:'Debt Analysis'},
   {id:'cost',      icon:'💰', label:'Cost Model'},
   {id:'nego',      icon:'⚖️', label:'Negotiation'},
@@ -928,119 +927,73 @@ function jiraIssueUrl(key, projectKey) {
   return `https://pnp16.atlassian.net/jira/software/projects/${projectKey}/issues/${key}`;
 }
 
-function PhaseJira({onSelect, selectedItem, logs, running, onLoad, activeProduct, onProductChange, jiraItems, project}) {
-  const [jiraUrl, setJiraUrl] = React.useState(project.backlogUrl);
-  React.useEffect(()=>{ setJiraUrl(project.backlogUrl); }, [project.backlogUrl]);
-
+// ── Phase 1: Features & Repository ───────────────────────────────────────
+function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned, onContinue}) {
+  const repos = Object.values(repoData);
   return (
     <div className="fade-in">
 
-      <div className="phase-header" style={{flexDirection:'column',alignItems:'stretch',gap:14,padding:'18px 20px'}}>
-        {/* Top row: icon + title + button */}
-        <div className="phase-header-top" style={{display:'flex',alignItems:'center',gap:12}}>
-          <div className="phase-icon" style={{fontSize:24}}>🎫</div>
-          <div style={{flex:1}}>
-            <div className="phase-title" style={{fontSize:20}}>{project.id} — {project.name}</div>
-            <div className="phase-sub" style={{marginTop:3}}>
-              Roadmap backlog — tech debt blockers flagged by engineering. Paste your own JIRA backlog URL below, then click Load.
-            </div>
-          </div>
-          {!logs.length && (
-            <button className="btn btn-primary" style={{flexShrink:0}} onClick={onLoad} disabled={running}>
-              {running ? <><span className="spin">⟳</span> Loading…</> : '▶ Load JIRA Backlog'}
-            </button>
-          )}
-        </div>
-
-        {/* JIRA URL input row */}
-        <div className="jira-url-row" style={{display:'flex',alignItems:'center',gap:10}}>
-          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)',whiteSpace:'nowrap',letterSpacing:'.06em'}}>
-            JIRA BACKLOG URL
-          </span>
-          <div style={{flex:1,position:'relative'}}>
-            <input
-              className="input-field"
-              value={jiraUrl}
-              onChange={e=>setJiraUrl(e.target.value)}
-              spellCheck={false}
-              style={{paddingLeft:28,fontSize:'11px',letterSpacing:'.02em'}}
-            />
-            <span style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:'11px',pointerEvents:'none'}}>🔗</span>
-          </div>
-          <a href={jiraUrl} target="_blank" rel="noopener noreferrer"
-            style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--blue)',textDecoration:'none',
-                    padding:'7px 12px',border:'1px solid var(--blue-border)',borderRadius:'6px',whiteSpace:'nowrap',flexShrink:0}}>
-            Open ↗
-          </a>
+      {/* Features list */}
+      <div className="phase-header" style={{marginBottom:14}}>
+        <div className="phase-icon">🎫</div>
+        <div>
+          <div className="phase-title">Requested Features</div>
+          <div className="phase-sub">Backlog items the business wants to ship — each linked to a JIRA ticket.</div>
         </div>
       </div>
 
-      {logs.length > 0 && (
-        <div className="fade-in">
-          <div style={{marginBottom:8,fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase'}}>
-            {jiraItems.length} blocker items · Click a ticket to trace its repository
+      <div style={{marginBottom:20}}>
+        {jiraItems.map(item => (
+          <div key={item.key} style={{
+            display:'flex', alignItems:'center', gap:12,
+            padding:'11px 14px',
+            border:'1px solid var(--border)',
+            borderLeft:'4px solid var(--border2)',
+            borderRadius:'var(--radius)',
+            background:'var(--surface)',
+            marginBottom:6,
+          }}>
+            <span className="jira-key" style={{flexShrink:0}}>{item.key}</span>
+            <span style={{flex:1, fontSize:'13px', color:'var(--soft)', lineHeight:1.4}}>{item.title}</span>
+            <a href={jiraIssueUrl(item.key, product.project.key)} target="_blank" rel="noopener noreferrer"
+              style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none',
+                      padding:'4px 10px',border:'1px solid var(--blue-border)',borderRadius:'4px',whiteSpace:'nowrap',flexShrink:0}}>
+              Open ↗
+            </a>
           </div>
-          <div className="jira-grid">
-            {jiraItems.map(item=>(
-              <div key={item.key}
-                className={`jira-card priority-${item.priority} ${selectedItem?.key===item.key?'selected':''}`}
-                onClick={()=>onSelect(item)}>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                  <span className="jira-key">{item.key}</span>
-                  <span className={`jira-priority priority-${item.priority}`}>{item.priority}</span>
-                </div>
-                <div className="jira-title">{item.title}</div>
-                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'auto'}}>
-                  <a href={jiraIssueUrl(item.key, project.key)} target="_blank" rel="noopener noreferrer"
-                    style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none'}}
-                    onClick={e=>e.stopPropagation()}>
-                    🔗 Open ticket
-                  </a>
-                  <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>{item.points}pts</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+        ))}
+      </div>
 
-// ── Phase 2: Repository ───────────────────────────────────────────────────
-function PhaseRepo({selectedJira, repoName, repoData, onScan, scanning, scanned, onContinue}) {
-  const repo = repoData[repoName];
-  return (
-    <div className="fade-in">
-      <div className="card" style={{marginBottom:14}}>
-        <div className="card-head" style={{padding:'14px 18px'}}>
-          <span style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:20,color:'var(--text)',letterSpacing:'.01em'}}>
-            📁 Linked Repository
-          </span>
-          <span className="badge badge-live" style={{marginLeft:'auto'}}>LOADED</span>
+      {/* Repositories */}
+      <div className="phase-header" style={{marginBottom:14}}>
+        <div className="phase-icon">📁</div>
+        <div>
+          <div className="phase-title">{repos.length === 1 ? 'Repository' : 'Repositories'}</div>
+          <div className="phase-sub">Source code repositories linked to this product.</div>
         </div>
-        <div className="card-body">
-          <div className="repo-box">
-            <div className="repo-icon">⚙️</div>
-            <div>
-              <div className="repo-name">{repoName}</div>
-              <div style={{fontSize:'10px',color:'var(--dim)'}}>{repo?.description}</div>
+      </div>
+
+      <div style={{marginBottom:20}}>
+        {repos.map(repo => (
+          <div key={repo.name} style={{marginBottom:8}}>
+            <div className="repo-box">
+              <div className="repo-icon">⚙️</div>
+              <div style={{flex:1}}>
+                <div className="repo-name">{repo.name}</div>
+                <div style={{fontSize:'10px',color:'var(--dim)'}}>{repo.description} · {repo.language} · {repo.files} files</div>
+              </div>
             </div>
-            <div style={{marginLeft:'auto',textAlign:'right'}}>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.language}</div>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)'}}>{repo?.files} files · last commit {repo?.lastCommit}</div>
+            <div style={{marginTop:6}}>
+              <label className="input-label">GitHub URL</label>
+              <input className="input-field" readOnly value={`https://github.com/your-org/${repo.name}`}/>
             </div>
           </div>
-          <div style={{marginTop:12}}>
-            <label className="input-label">Repository URL</label>
-            <input className="input-field" readOnly value={`https://github.com/your-org/${repoName}`}/>
-          </div>
-        </div>
+        ))}
       </div>
 
       {!scanned ? (
         <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
-          {scanning ? <><span className="spin">⟳</span> Scanning…</> : '🔍 Scan Repositories'}
+          {scanning ? <><span className="spin">⟳</span> Scanning repositories…</> : '🔍 Scan the Repository for Tech Debts'}
         </button>
       ) : (
         <button className="btn btn-secondary btn-block" onClick={onContinue}>
@@ -1128,6 +1081,24 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
             <div className="kpi-label">{k.label}</div>
             <div className={`kpi-val ${k.cls}`}>{k.val}</div>
             <div className="kpi-sub">{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* How the numbers are calculated */}
+      <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'16px 18px',marginBottom:14}}>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:12}}>
+          How these numbers are calculated
+        </div>
+        {[
+          {label:'Refactoring Cost', formula:`${costData.effort_weeks} weeks of fixing × 4 engineers × $8,000/engineer/week`},
+          {label:'Annual Savings',   formula:'Total cost of all selected debt items if left unfixed for 12 months'},
+          {label:'Break-Even',       formula:'Refactoring cost ÷ (Annual savings ÷ 52) — the week your investment is fully recovered'},
+          {label:'First-Year ROI',   formula:'(Annual savings − Refactoring cost) ÷ Refactoring cost × 100'},
+        ].map((row,i,arr)=>(
+          <div key={i} style={{display:'flex',gap:12,paddingBottom:i<arr.length-1?10:0,marginBottom:i<arr.length-1?10:0,borderBottom:i<arr.length-1?'1px solid var(--border)':'none'}}>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--accent2)',flexShrink:0,minWidth:110}}>{row.label}</div>
+            <div style={{fontSize:'11.5px',color:'var(--soft)',lineHeight:1.65}}>{row.formula}</div>
           </div>
         ))}
       </div>
@@ -1291,7 +1262,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
 // ── Main App ──────────────────────────────────────────────────────────────
 function App() {
   const [logs, setLogs] = useState([]);
-  const [phase, setPhase] = useState('landing'); // landing | jira | repo | debt | cost | nego | dashboard
+  const [phase, setPhase] = useState('landing'); // landing | features | debt | cost | nego | dashboard
 
   // Product selection
   const [activeProduct, setActiveProduct] = useState('fraud-detection');
@@ -1301,12 +1272,7 @@ function App() {
   const activeProject = product.project;
   const ALL_DEBTS = Object.values(activeRepoData).flatMap(r => r.debts);
 
-  // Jira
-  const [jiraLoading, setJiraLoading] = useState(false);
-  const [jiraLoaded, setJiraLoaded] = useState(false);
-  const [selectedJira, setSelectedJira] = useState(null);
-
-  // Repo
+  // Repo scan
   const [scanning, setScanning] = useState(false);
   const [scanned, setScanned] = useState(false);
 
@@ -1321,41 +1287,15 @@ function App() {
 
   const addLog = useCallback((msg, type='info') => setLogs(l=>[...l,{msg,type}]), []);
 
-  const [fromLanding, setFromLanding] = useState(false);
-
-  const onProductChange = (productId) => {
-    setActiveProduct(productId);
-    setPhase('jira');
-    setSelectedJira(null);
-    setJiraLoaded(false);
-    setScanned(false);
-    setSelectedDebts([]);
-    setCostData(null);
-    setNegotiation(null);
-    setLogs([]);
-  };
-
-  // Called from landing page — resets state then auto-triggers JIRA load
   const selectProductFromLanding = (productId) => {
     setActiveProduct(productId);
-    setPhase('jira');
-    setSelectedJira(null);
-    setJiraLoaded(false);
+    setPhase('features');
     setScanned(false);
     setSelectedDebts([]);
     setCostData(null);
     setNegotiation(null);
     setLogs([]);
-    setFromLanding(true);
   };
-
-  // After state settles on 'jira' phase from landing, auto-fire loadJira
-  useEffect(() => {
-    if (fromLanding && phase === 'jira') {
-      setFromLanding(false);
-      loadJira();
-    }
-  }, [fromLanding]);
 
   // Compute cost live based on selected debts
   const computeCost = (ids) => {
@@ -1369,58 +1309,23 @@ function App() {
     return { annual_savings, effort_weeks, refactoring_cost, break_even_weeks, roi_pct, critical_count, total_count:items.length };
   };
 
-  // Load JIRA
-  const loadJira = async () => {
-    setJiraLoading(true);
-    addLog(`▶ Connecting to JIRA Cloud (${activeProject.backlogUrl.split('/')[2]})…`,'info');
-    await wait(600);
-    addLog('  ✓ Authenticated via OAuth token','ok');
-    await wait(400);
-    addLog(`  🔍 Querying backlog: project=${activeProject.key} AND labels=tech-debt AND priority IN (Critical,High,Medium)`,'info');
-    await wait(700);
-    addLog(`  ✓ Found ${activeJiraItems.length} blocker items linked to tech debt tracker`,'ok');
-    activeJiraItems.forEach((item,i)=>{
-      setTimeout(()=>addLog(`    ${item.key}: ${item.title} [${item.priority}]`,'dim'),i*120);
-    });
-    await wait(activeJiraItems.length*120+300);
-    addLog('✓ JIRA backlog loaded — click an item to trace its repository','ok');
-    setJiraLoaded(true);
-    setJiraLoading(false);
-  };
-
-  const selectJira = async (item) => {
-    setSelectedJira(item);
-    addLog(`──────────────────────────────────`,'dim');
-    addLog(`▶ Tracing ${item.key} → repository dependency…`,'info');
-    await wait(400);
-    addLog(`  ✓ Repository linked: ${item.repo}`,'ok');
-    addLog(`  📦 Cloning metadata for ${item.repo}…`,'info');
-    await wait(300);
-    addLog(`  ✓ ${activeRepoData[item.repo]?.files} files indexed`,'ok');
-    setPhase('repo');
-    setScanned(false);
-    setSelectedDebts([]);
-    setCostData(null);
-    setNegotiation(null);
-  };
-
-  const scanRepo = async () => {
+  const scanAllRepos = async () => {
     setScanning(true);
-    const repo = activeRepoData[selectedJira.repo];
-    addLog(`──────────────────────────────────`,'dim');
-    addLog(`▶ Scanning ${selectedJira.repo} for tech debt…`,'info');
+    const repos = Object.values(activeRepoData);
+    const totalFiles = repos.reduce((s,r) => s + r.files, 0);
+    addLog(`▶ Scanning ${repos.length} ${repos.length===1?'repository':'repositories'} for tech debt…`,'info');
     await wait(500);
-    addLog(`  🤖 Claude analyzing ${repo.files} files…`,'info');
+    addLog(`  🤖 Claude analyzing ${totalFiles} files…`,'info');
     await wait(800);
     addLog(`  🔍 Pattern detection: god classes, batch pipelines, missing registries…`,'info');
     await wait(600);
-    repo.debts.forEach((d,i)=>{
-      setTimeout(()=>addLog(`  ⚠ ${d.severity.toUpperCase()}: ${d.type} — ${fmt(d.annual_cost)}/yr`,d.severity==='critical'?'error':d.severity==='high'?'warn':'info'),i*200);
+    const allDebts = repos.flatMap(r => r.debts);
+    allDebts.forEach((d,i)=>{
+      setTimeout(()=>addLog(`  ⚠ ${d.severity.toUpperCase()}: ${d.type} — ${fmt(d.annual_cost)}/yr`,d.severity==='critical'?'error':d.severity==='high'?'warn':'info'),i*150);
     });
-    await wait(repo.debts.length*200+400);
-    addLog(`✓ Found ${repo.debts.length} debt items (${fmt(repo.debts.reduce((s,d)=>s+d.annual_cost,0))}/yr total)`,'ok');
-    const ids = repo.debts.map(d=>d.id);
-    setSelectedDebts(ids);
+    await wait(allDebts.length*150+400);
+    addLog(`✓ Found ${allDebts.length} debt items (${fmt(allDebts.reduce((s,d)=>s+d.annual_cost,0))}/yr total)`,'ok');
+    setSelectedDebts(allDebts.map(d=>d.id));
     setScanning(false);
     setScanned(true);
     setPhase('debt');
@@ -1458,7 +1363,7 @@ function App() {
     await wait(600);
     addLog(`  ⚖️  Cross-referencing ${selectedDebts.length} debt items vs. ${activeJiraItems.length} JIRA tickets…`,'info');
     await wait(700);
-    const blocked = activeJiraItems.filter(t=>t.repo===selectedJira?.repo||t.priority==='critical');
+    const blocked = activeJiraItems.filter(t=>t.priority==='critical'||t.priority==='high');
     addLog(`  🚫 ${blocked.length}/${activeJiraItems.length} features blocked or critically slowed by debt`,'warn');
     const pNego = product.nego;
     const optA = pNego.optA_stats;
@@ -1481,22 +1386,12 @@ function App() {
 
   const goHome = () => {
     setPhase('landing');
-    setSelectedJira(null);
-    setJiraLoaded(false);
     setScanned(false);
     setSelectedDebts([]);
     setCostData(null);
     setNegotiation(null);
     setLogs([]);
   };
-
-  const activeRepo = selectedJira ? activeRepoData[selectedJira.repo] : null;
-  const activeDebts = activeRepo ? activeRepo.debts : [];
-
-  const phaseLabel = {
-    jira:'JIRA Backlog Scan',repo:'Repository Browser',debt:'Debt Detection',
-    cost:'Cost & ROI Analysis',nego:'Negotiation Agent',dashboard:'Final Dashboard',
-  }[phase];
 
   return (
     <div className="shell">
@@ -1511,7 +1406,6 @@ function App() {
           )}
         </div>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          {selectedJira && <span className="badge badge-info">{selectedJira.key}</span>}
           {costData && <span className="badge badge-warn">{fmt(costData.annual_savings)}/YR DEBT</span>}
           {negotiation && <span className="badge badge-live">ANALYSIS COMPLETE</span>}
         </div>
@@ -1522,10 +1416,9 @@ function App() {
       <div className="body-layout">
         <div className="main-area">
           {phase==='landing'   && <PhaseLanding onSelectProduct={selectProductFromLanding}/>}
-          {phase==='jira'      && <PhaseJira onSelect={selectJira} selectedItem={selectedJira} logs={logs} running={jiraLoading} onLoad={loadJira} activeProduct={activeProduct} onProductChange={onProductChange} jiraItems={activeJiraItems} project={activeProject}/>}
-          {phase==='repo'      && <PhaseRepo selectedJira={selectedJira} repoName={selectedJira?.repo} repoData={activeRepoData} onScan={scanRepo} scanning={scanning} scanned={scanned} onContinue={()=>setPhase('debt')}/>}
-          {phase==='debt'      && <PhaseDebt debts={activeDebts} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData} onContinue={()=>setPhase('cost')}/>}
-          {phase==='cost'      && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={activeDebts} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation} onContinue={()=>setPhase('nego')}/>}
+          {phase==='features'  && <PhaseFeatures product={product} jiraItems={activeJiraItems} repoData={activeRepoData} onScan={scanAllRepos} scanning={scanning} scanned={scanned} onContinue={()=>setPhase('debt')}/>}
+          {phase==='debt'      && <PhaseDebt debts={ALL_DEBTS} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData} onContinue={()=>setPhase('cost')}/>}
+          {phase==='cost'      && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation} onContinue={()=>setPhase('nego')}/>}
           {phase==='nego'      && <PhaseNego negotiation={negotiation} costData={costData} nego={product.nego} jiraCount={activeJiraItems.length} onDashboard={()=>setPhase('dashboard')}/>}
           {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} nego={product.nego} jiraItems={activeJiraItems}/>}
         </div>
