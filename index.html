@@ -429,6 +429,14 @@ body {
   /* Buttons */
   .btn { min-height: 40px; }
 
+  /* Negotiation & Report page — scale down large type */
+  .kpi-val { font-size: 18px !important; }
+  .section-title { font-size: 15px !important; }
+  .rec-title { font-size: 14px !important; }
+  .nego-card-title { font-size: 13px !important; }
+  .nego-vs { font-size: 16px !important; }
+  .product-stat strong { font-size: 11px !important; }
+
 }
 
 /* ── Stepper ── */
@@ -1213,7 +1221,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
         ].map((k,i)=>(
           <div key={i} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'14px 16px'}}>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',textTransform:'uppercase',marginBottom:6}}>{k.label}</div>
-            <div className={`kpi-val ${k.cls}`} style={{fontSize:'20px',marginBottom:3}}>{k.val}</div>
+            <div className={`kpi-val ${k.cls}`} style={{marginBottom:3}}>{k.val}</div>
             <div style={{fontSize:'10px',color:'var(--dim)'}}>{k.sub}</div>
           </div>
         ))}
@@ -1222,7 +1230,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
       {/* Recommendation */}
       <div className="rec-box" style={{marginBottom:16}}>
         <div className="rec-label">✓ RECOMMENDATION</div>
-        <div className="rec-title" style={{fontSize:'17px',marginBottom:6}}>{nego.dashFinalTitle} — Ship Features by Week 16</div>
+        <div className="rec-title" style={{marginBottom:6}}>{nego.dashFinalTitle} — Ship Features by Week 16</div>
         <div className="rec-body">
           This platform carries <strong style={{color:'var(--red)'}}>{fmt(costData.annual_savings)}/year</strong> in quantified debt costs.
           {' '}{nego.dashNote} with 92% delivery confidence and break-even at Week {costData.break_even_weeks}.
@@ -1247,7 +1255,7 @@ function PhaseDashboard({costData, negotiation, selectedDebts, allDebts, nego, j
             background: i%2===0 ? 'transparent' : 'rgba(255,255,255,.015)',
           }}>
             <span className={`pill ${sevPill(d.severity)}`} style={{flexShrink:0,minWidth:58,textAlign:'center'}}>{d.severity}</span>
-            <span style={{flex:1,fontSize:'13px',color:'var(--text)',fontWeight:500}}>{d.type}</span>
+            <span style={{flex:1,fontSize:'11px',color:'var(--text)',fontWeight:500}}>{d.type}</span>
             <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:sevColor(d.severity),flexShrink:0}}>{fmt(d.annual_cost)}/yr</span>
             <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--dim)',flexShrink:0,minWidth:40,textAlign:'right'}}>{d.fix_weeks}w fix</span>
           </div>
