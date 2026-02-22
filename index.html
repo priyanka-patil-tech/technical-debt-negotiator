@@ -535,8 +535,8 @@ body {
   margin-bottom: 14px;
 }
 .product-grid {
-  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
-  width: 100%; max-width: 1020px;
+  display: grid; grid-template-columns: 1fr; gap: 10px;
+  width: 100%; max-width: 480px;
 }
 .product-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -552,11 +552,11 @@ body {
   box-shadow: 0 8px 32px rgba(0,0,0,.45);
 }
 .product-card-header {
-  padding: 20px 22px;
+  padding: 14px 18px;
   display: flex; align-items: center; gap: 12px;
 }
-.product-card-icon { font-size: 30px; line-height: 1; flex-shrink: 0; }
-.product-card-name { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -.25px; line-height: 1.25; }
+.product-card-icon { font-size: 24px; line-height: 1; flex-shrink: 0; }
+.product-card-name { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -.25px; line-height: 1.25; }
 .product-card-tag {
   margin-left: auto; flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
@@ -566,17 +566,17 @@ body {
   padding: 3px 10px; border-radius: 100px;
 }
 .product-card-body {
-  padding: 18px 22px 20px;
-  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px 18px 12px;
+  display: flex; flex-direction: column; gap: 6px;
   flex: 1;
 }
 .product-card-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
 .product-card-stats {
-  display: flex; gap: 16px; padding-top: 14px;
-  border-top: 1px solid var(--border); margin-top: 4px;
+  display: flex; gap: 16px; padding-top: 8px;
+  border-top: 1px solid var(--border); margin-top: 0;
 }
 .product-stat { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); }
-.product-stat strong { display: block; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 1px; }
+.product-stat strong { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 1px; }
 .product-card-cta {
   display: flex; align-items: center; justify-content: flex-end; margin-top: 2px;
   font-family: 'JetBrains Mono', monospace; font-size: 10px;
