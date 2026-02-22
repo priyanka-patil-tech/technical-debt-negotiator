@@ -354,13 +354,15 @@ body {
 
 /* ── Responsive (mobile) ── */
 @media (max-width: 768px) {
-  /* Enable vertical page scroll — !important needed to beat Android Chrome's
-     treatment of overflow:hidden on html/body */
-  html { height: auto !important; overflow: visible !important; }
-  body { height: auto !important; overflow-x: hidden !important; overflow-y: auto !important; }
-  .shell { height: auto !important; min-height: 100svh; overflow: visible !important; }
-  .body-layout { flex-direction: column; overflow: visible !important; height: auto !important; }
-  .main-area { overflow: visible !important; height: auto !important; flex: none !important; padding: 12px 14px; }
+  /* Topbar + stepper stay fixed; .main-area scrolls inside the shell.
+     This mirrors how desktop works — no fighting with html/body overflow. */
+  .body-layout { flex-direction: column; overflow: hidden; }
+  .main-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 14px;
+  }
 
   /* Hide log panel */
   .log-panel { display: none !important; }
@@ -401,7 +403,7 @@ body {
   /* Phase header — allow cost display to wrap */
   .phase-header { flex-wrap: wrap; }
 
-  /* Debt list — remove fixed height so page scrolls naturally */
+  /* Debt list — unconstrain height, let .main-area handle the scroll */
   .debt-list { max-height: none !important; overflow-y: visible !important; }
 
   /* Buttons */
