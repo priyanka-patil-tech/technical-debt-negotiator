@@ -975,6 +975,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
         <input className="input-field" readOnly value={product.githubUrl}/>
       </div>
 
+      <div style={{position:'sticky', bottom:0, background:'var(--bg)', paddingTop:12, paddingBottom:6}}>
       {!scanned ? (
         <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
           {scanning ? <><span className="spin">⟳</span> Scanning repositories…</> : '🔍 Scan the Repository for Tech Debts'}
@@ -984,6 +985,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
           → Continue to Debt Analysis
         </button>
       )}
+      </div>
     </div>
   );
 }
