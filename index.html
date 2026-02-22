@@ -597,6 +597,7 @@ const PRODUCTS_DATA = {
   'fraud-detection': {
     icon: '🤖',
     gradient: 'linear-gradient(135deg, #1d4ed8, #4f46e5)',
+    githubUrl: 'https://github.com/priyanka-patil-tech/fraud-detection-model.git',
     label: 'Fraud Detection ML Platform',
     description: 'ML pipeline powering real-time fraud detection',
     project: { name:'Fraud Detection ML Platform', key:'ML', id:'ML-1401', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/ML/boards/backlog' },
@@ -668,6 +669,7 @@ const PRODUCTS_DATA = {
   'payment-platform': {
     icon: '💳',
     gradient: 'linear-gradient(135deg, #065f46, #0891b2)',
+    githubUrl: 'https://github.com/priyanka-patil-tech/payment-platform.git',
     label: 'Payment Platform',
     description: 'Core payment processing & checkout infrastructure',
     project: { name:'Payment Platform', key:'PAY', id:'PAY-2001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/PAY/boards/backlog' },
@@ -725,6 +727,7 @@ const PRODUCTS_DATA = {
   'analytics-pipeline': {
     icon: '📈',
     gradient: 'linear-gradient(135deg, #c2410c, #db2777)',
+    githubUrl: 'https://github.com/priyanka-patil-tech/analytics-pipeline.git',
     label: 'Analytics Pipeline',
     description: 'Real-time event streaming & batch reporting infrastructure',
     project: { name:'Analytics Pipeline', key:'AP', id:'AP-3001', backlogUrl:'https://pnp16.atlassian.net/jira/software/projects/AP/boards/backlog' },
@@ -964,31 +967,17 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
         ))}
       </div>
 
-      {/* Repositories */}
-      <div className="phase-header" style={{marginBottom:14}}>
-        <div className="phase-icon">📁</div>
-        <div>
-          <div className="phase-title">{repos.length === 1 ? 'Repository' : 'Repositories'}</div>
-          <div className="phase-sub">Source code repositories linked to this product.</div>
-        </div>
-      </div>
-
+      {/* Repository */}
       <div style={{marginBottom:20}}>
-        {repos.map(repo => (
-          <div key={repo.name} style={{marginBottom:8}}>
-            <div className="repo-box">
-              <div className="repo-icon">⚙️</div>
-              <div style={{flex:1}}>
-                <div className="repo-name">{repo.name}</div>
-                <div style={{fontSize:'10px',color:'var(--dim)'}}>{repo.description} · {repo.language} · {repo.files} files</div>
-              </div>
-            </div>
-            <div style={{marginTop:6}}>
-              <label className="input-label">GitHub URL</label>
-              <input className="input-field" readOnly value={`https://github.com/your-org/${repo.name}`}/>
-            </div>
+        <div className="repo-box" style={{marginBottom:6}}>
+          <div className="repo-icon">⚙️</div>
+          <div style={{flex:1}}>
+            <div className="repo-name">{Object.values(repoData)[0].name}</div>
+            <div style={{fontSize:'10px',color:'var(--dim)'}}>{Object.values(repoData)[0].description}</div>
           </div>
-        ))}
+        </div>
+        <label className="input-label">GitHub URL</label>
+        <input className="input-field" readOnly value={product.githubUrl}/>
       </div>
 
       {!scanned ? (
