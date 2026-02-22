@@ -361,7 +361,7 @@ body {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 12px 14px;
+    padding: 12px 14px 160px; /* clear action bar (60px) + bottom nav (52px) + gap */
   }
 
   /* Hide log panel */
@@ -370,8 +370,13 @@ body {
   /* Topbar */
   .topbar { height: auto; min-height: 48px; padding: 8px 14px; flex-wrap: wrap; gap: 6px; }
 
-  /* Stepper — horizontal scroll, hide text labels to save space */
-  .stepper { overflow-x: auto; height: auto; min-height: 52px; padding: 0 10px; }
+  /* Stepper — move to bottom on mobile */
+  .stepper {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+    height: 52px; padding: 0 16px;
+    border-top: 1px solid var(--border); border-bottom: none;
+    overflow-x: auto;
+  }
   .step-label { display: none; }
   .step-line { min-width: 8px; }
 
@@ -429,12 +434,12 @@ body {
   /* Buttons */
   .btn { min-height: 40px; }
 
-  /* Floating action bar — pin to bottom of viewport */
+  /* Floating action bar — sits just above the bottom stepper nav */
   .phase-action-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
+    position: fixed; bottom: 52px; left: 0; right: 0;
     background: var(--bg);
     border-top: 1px solid var(--border);
-    padding: 10px 14px 14px;
+    padding: 10px 14px 10px;
     z-index: 200;
   }
 
@@ -563,8 +568,8 @@ body {
   margin-bottom: 14px;
 }
 .product-grid {
-  display: grid; grid-template-columns: 1fr; gap: 10px;
-  width: 100%; max-width: 480px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  width: 100%; max-width: 900px;
 }
 .product-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -830,8 +835,7 @@ const PRODUCTS_DATA = {
 const STEPS = [
   {id:'features',  icon:'🎫', label:'Features & Repo'},
   {id:'debt',      icon:'🤖', label:'Debt Analysis'},
-  {id:'cost',      icon:'💰', label:'Cost Model'},
-  {id:'nego',      icon:'⚖️', label:'Negotiation'},
+  {id:'decision',  icon:'⚖️', label:'Decision'},
   {id:'dashboard', icon:'📊', label:'Report'},
 ];
 const PHASE_ORDER = STEPS.map(s=>s.id);
@@ -863,11 +867,11 @@ function Stepper({phase, onGoTo}) {
 
 // ── Log panel ────────────────────────────────────────────────────────────
 function LogPanel({logs}) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const ref = useRef(null);
   useEffect(()=>{ if(ref.current) ref.current.scrollTop = ref.current.scrollHeight; },[logs]);
   return (
-    <div className="log-panel" style={{width: open ? 300 : 36, transition:'width .25s ease', overflow:'hidden'}}>
+    <div className="log-panel" style={{width: open ? 240 : 36, transition:'width .25s ease', overflow:'hidden'}}>
       <div className="log-panel-header" style={{cursor:'pointer', justifyContent:'center', padding:'10px 8px'}}
         onClick={()=>setOpen(o=>!o)}>
         {open ? (
@@ -959,7 +963,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
     <div className="fade-in" style={{display:'flex', flexDirection:'column', height:'100%'}}>
 
       {/* Scrollable content */}
-      <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom:72}}>
+      <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch'}}>
 
         <div className="phase-header" style={{marginBottom:14}}>
           <div className="phase-icon">🎫</div>
@@ -1022,77 +1026,113 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
 }
 
 // ── Phase 3: Debt Items ───────────────────────────────────────────────────
+function DebtRow({d, selected, onToggle}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const pillCls = d.severity==='critical'?'red':d.severity==='high'?'amber':'blue';
+  return (
+    <div className={`debt-row ${d.severity}`}>
+      <input type="checkbox" className="debt-checkbox"
+        checked={selected.includes(d.id)}
+        onChange={()=>onToggle(d.id)}/>
+      <div className="debt-info">
+        <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+          <span className={`pill pill-${pillCls}`}>{d.severity}</span>
+          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',fontWeight:700,
+            color:d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)',
+            flex:1}}>{d.type}</span>
+        </div>
+        {expanded && (
+          <div style={{fontSize:'12px',color:'var(--text)',lineHeight:1.5,marginBottom:4}}>{d.description}</div>
+        )}
+        <button onClick={()=>setExpanded(e=>!e)}
+          style={{background:'none',border:'none',cursor:'pointer',padding:0,
+            fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.04em'}}>
+          {expanded ? '▲ collapse' : '▼ why this matters'}
+        </button>
+      </div>
+      <div className="debt-cost-tag" style={{textAlign:'right',whiteSpace:'nowrap'}}>
+        <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>if left unfixed</div>
+        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>{d.fix_weeks}w to fix</div>
+      </div>
+    </div>
+  );
+}
+
 function PhaseDebt({debts, selected, onToggle, onCalc, calculating, costData, onContinue}) {
+  const [filter, setFilter] = React.useState('all');
   const total = debts.filter(d=>selected.includes(d.id)).reduce((s,d)=>s+d.annual_cost,0);
+  const counts = {all:debts.length, critical:debts.filter(d=>d.severity==='critical').length,
+                  high:debts.filter(d=>d.severity==='high').length, medium:debts.filter(d=>d.severity==='medium').length};
+  const visible = filter==='all' ? debts : debts.filter(d=>d.severity===filter);
   return (
     <div className="fade-in">
       <div className="phase-header">
         <div className="phase-icon">🤖</div>
         <div>
           <div className="phase-title">Debt Items Detected</div>
-          <div className="phase-sub">AI-identified technical debt across linked repositories. Select items to include in cost calculation.</div>
+          <div className="phase-sub">Select items to include in the cost model.</div>
         </div>
-        <div style={{marginLeft:'auto',textAlign:'right'}}>
-          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>SELECTED ANNUAL COST</div>
-          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:'22px',color:'var(--red)'}}>{fmt(total)}</div>
+        <div style={{marginLeft:'auto',textAlign:'right',flexShrink:0}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>SELECTED COST</div>
+          <div style={{fontFamily:"'Plus Jakarta Sans',sans-serif",fontWeight:700,fontSize:'18px',color:'var(--red)'}}>{fmt(total)}/yr</div>
         </div>
       </div>
 
-      <div className="debt-list" style={{maxHeight:'calc(100vh - 380px)',overflowY:'auto',marginBottom:14}}>
-        {debts.map(d=>(
-          <div key={d.id} className={`debt-row ${d.severity}`}>
-            <input type="checkbox" className="debt-checkbox"
-              checked={selected.includes(d.id)}
-              onChange={()=>onToggle(d.id)}/>
-            <div className="debt-info">
-              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
-                <span className={`pill pill-${d.severity==='critical'?'red':d.severity==='high'?'amber':'blue'}`}>{d.severity}</span>
-                <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',fontWeight:700,color: d.severity==='critical'?'var(--red)':d.severity==='high'?'var(--amber)':'var(--blue)'}}>{d.type}</span>
-              </div>
-              <div style={{fontSize:'12px',color:'var(--text)',lineHeight:1.5}}>{d.description}</div>
-            </div>
-            <div className="debt-cost-tag" style={{textAlign:'right',whiteSpace:'nowrap'}}>
-              <div className="debt-cost-num">{fmt(d.annual_cost)}/yr</div>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)'}}>if left unfixed</div>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--green)',marginTop:4}}>{d.fix_weeks}w to fix</div>
-            </div>
-          </div>
+      {/* Filter pills */}
+      <div style={{display:'flex',gap:6,marginBottom:10,flexWrap:'wrap'}}>
+        {[['all','All'],['critical','Critical'],['high','High'],['medium','Medium']].map(([val,label])=>(
+          <button key={val} onClick={()=>setFilter(val)}
+            style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',fontWeight:600,
+              padding:'4px 10px',borderRadius:20,cursor:'pointer',
+              border:`1px solid ${filter===val?'var(--accent)':'var(--border)'}`,
+              background:filter===val?'var(--accent-bg)':'transparent',
+              color:filter===val?'var(--accent2)':'var(--dim)'}}>
+            {label} ({counts[val]})
+          </button>
+        ))}
+      </div>
+
+      <div className="debt-list" style={{maxHeight:'calc(100vh - 340px)',overflowY:'auto',marginBottom:14}}>
+        {visible.map(d=>(
+          <DebtRow key={d.id} d={d} selected={selected} onToggle={onToggle}/>
         ))}
       </div>
 
       {!costData ? (
         <button className="btn btn-primary btn-block" onClick={onCalc} disabled={calculating||selected.length===0}>
-          {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Effort & Cost (${selected.length} items selected)`}
+          {calculating ? <><span className="spin">⟳</span> Calculating…</> : `💰 Calculate Cost & Decision (${selected.length} items selected)`}
         </button>
       ) : (
         <button className="btn btn-secondary btn-block" onClick={onContinue}>
-          → Continue to Cost Analysis
+          → Continue to Decision
         </button>
       )}
     </div>
   );
 }
 
-// ── Phase 4: Cost Preview (Live) ──────────────────────────────────────────
-function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating, negotiation, onContinue}) {
+// ── Phase 3: Decision (Cost + Negotiation) ────────────────────────────────
+function PhaseDecision({costData, onNegotiate, negotiating, negotiation, nego, onDashboard}) {
   return (
     <div className="fade-in">
       <div className="phase-header">
-        <div className="phase-icon">💰</div>
+        <div className="phase-icon">⚖️</div>
         <div>
-          <div className="phase-title">What Does Fixing This Actually Cost?</div>
-          <div className="phase-sub">Based on the issues selected above — how much to fix them, how much they save, and when you break even.</div>
+          <div className="phase-title">Cost & Decision</div>
+          <div className="phase-sub">What it costs to fix, what it saves, and which path the AI recommends.</div>
         </div>
       </div>
 
+      {/* Cost KPIs — always visible */}
       <div className="three-col" style={{marginBottom:14}}>
         {[
-          {label:'Refactoring Cost',val:fmt(costData.refactoring_cost),cls:'amber',sub:`${costData.effort_weeks}w × 4 engineers`},
-          {label:'Annual Savings',val:fmt(costData.annual_savings),cls:'green',sub:'Debt costs eliminated'},
-          {label:'Break-Even',val:`Wk ${costData.break_even_weeks}`,cls:'blue',sub:'Then saves forever'},
-          {label:'First-Year ROI',val:`${costData.roi_pct}%`,cls:costData.roi_pct>0?'green':'red',sub:'Return on investment'},
-          {label:'Critical Issues',val:costData.critical_count,cls:'red',sub:`${costData.total_count} total selected`},
-          {label:'Prod Risk (Build Now)',val:'65%',cls:'red',sub:'Regression probability'},
+          {label:'Refactoring Cost',      val:fmt(costData.refactoring_cost), cls:'amber', sub:`${costData.effort_weeks}w × 4 engineers`},
+          {label:'Annual Savings',        val:fmt(costData.annual_savings),   cls:'green', sub:'Debt costs eliminated'},
+          {label:'Break-Even',            val:`Wk ${costData.break_even_weeks}`, cls:'blue', sub:'Then saves forever'},
+          {label:'First-Year ROI',        val:`${costData.roi_pct}%`,         cls:costData.roi_pct>0?'green':'red', sub:'Return on investment'},
+          {label:'Critical Issues',       val:costData.critical_count,        cls:'red',   sub:`${costData.total_count} total selected`},
+          {label:'Prod Risk (Build Now)', val:'65%',                          cls:'red',   sub:'Regression probability'},
         ].map((k,i)=>(
           <div key={i} className="kpi-box">
             <div className="kpi-label">{k.label}</div>
@@ -1102,101 +1142,73 @@ function PhaseCost({costData, selectedDebts, allDebts, onNegotiate, negotiating,
         ))}
       </div>
 
-      {/* How the numbers are calculated */}
-      <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'16px 18px',marginBottom:14}}>
-        <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:12}}>
-          How these numbers are calculated
-        </div>
-        {[
-          {label:'Refactoring Cost', formula:`${costData.effort_weeks} weeks of fixing × 4 engineers × $8,000/engineer/week`},
-          {label:'Annual Savings',   formula:'Total cost of all selected debt items if left unfixed for 12 months'},
-          {label:'Break-Even',       formula:'Refactoring cost ÷ (Annual savings ÷ 52) — the week your investment is fully recovered'},
-          {label:'First-Year ROI',   formula:'(Annual savings − Refactoring cost) ÷ Refactoring cost × 100'},
-        ].map((row,i,arr)=>(
-          <div key={i} style={{display:'flex',gap:12,paddingBottom:i<arr.length-1?10:0,marginBottom:i<arr.length-1?10:0,borderBottom:i<arr.length-1?'1px solid var(--border)':'none'}}>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',color:'var(--accent2)',flexShrink:0,minWidth:110}}>{row.label}</div>
-            <div style={{fontSize:'11.5px',color:'var(--soft)',lineHeight:1.65}}>{row.formula}</div>
-          </div>
-        ))}
-      </div>
+      {/* Divider */}
+      <div style={{borderTop:'1px solid var(--border)',marginBottom:14}}/>
 
       {!negotiation ? (
-        <button className="btn btn-blue btn-block" onClick={onNegotiate} disabled={negotiating}>
-          {negotiating ? <><span className="spin">⟳</span> Running Negotiation Agent…</> : '⚖️ Run Negotiations'}
-        </button>
+        /* ── Pre-negotiation: show button ── */
+        <div style={{textAlign:'center',padding:'24px 0'}}>
+          <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.1em',textTransform:'uppercase',marginBottom:12}}>
+            Ready to model both paths?
+          </div>
+          <button className="btn btn-blue btn-block" onClick={onNegotiate} disabled={negotiating}>
+            {negotiating ? <><span className="spin">⟳</span> Running Negotiation Agent…</> : '⚖️ Run Negotiations — Refactor vs Build Now'}
+          </button>
+        </div>
       ) : (
-        <button className="btn btn-secondary btn-block" onClick={onContinue}>
-          → Continue to Negotiation
-        </button>
-      )}
-    </div>
-  );
-}
-
-// ── Phase 5: Negotiation ──────────────────────────────────────────────────
-function PhaseNego({negotiation, costData, nego, jiraCount, onDashboard}) {
-  return (
-    <div className="fade-in">
-      <div className="phase-header">
-        <div className="phase-icon">⚖️</div>
+        /* ── Post-negotiation: show full comparison + recommendation ── */
         <div>
-          <div className="phase-title">Refactor vs Build</div>
-          <div className="phase-sub">AI agent models both paths against your debt costs and delivery timeline.</div>
-        </div>
-      </div>
-
-      {/* Option cards — stats only, no bullet lists */}
-      <div className="nego-grid" style={{marginBottom:14}}>
-        <div className="nego-card opt-a">
-          <div className="nego-card-label a">OPTION A</div>
-          <div className="nego-card-title">Build Features Now</div>
-          {nego.optA_stats.map(([l,v],i)=>(
-            <div key={i} className="nego-stat">
-              <span className="nego-stat-label">{l}</span>
-              <span className="nego-stat-val" style={{color:i===1||i===2?'var(--red)':undefined}}>{v}</span>
+          {/* Option A vs B */}
+          <div className="nego-grid" style={{marginBottom:14}}>
+            <div className="nego-card opt-a">
+              <div className="nego-card-label a">OPTION A</div>
+              <div className="nego-card-title">Build Features Now</div>
+              {nego.optA_stats.map(([l,v],i)=>(
+                <div key={i} className="nego-stat">
+                  <span className="nego-stat-label">{l}</span>
+                  <span className="nego-stat-val" style={{color:i===1||i===2?'var(--red)':undefined}}>{v}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="nego-vs">vs</div>
-
-        <div className="nego-card opt-b">
-          <div className="nego-card-label b">OPTION B — RECOMMENDED</div>
-          <div className="nego-card-title">Refactor First, Then Build</div>
-          {nego.optB_stats.map(([l,v],i)=>(
-            <div key={i} className="nego-stat">
-              <span className="nego-stat-label">{l}</span>
-              <span className="nego-stat-val" style={{color:i===2?'var(--green)':undefined}}>{v}</span>
+            <div className="nego-vs">vs</div>
+            <div className="nego-card opt-b">
+              <div className="nego-card-label b">OPTION B — RECOMMENDED</div>
+              <div className="nego-card-title">Refactor First, Then Build</div>
+              {nego.optB_stats.map(([l,v],i)=>(
+                <div key={i} className="nego-stat">
+                  <span className="nego-stat-label">{l}</span>
+                  <span className="nego-stat-val" style={{color:i===2?'var(--green)':undefined}}>{v}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recommendation */}
-      <div className="rec-box" style={{marginBottom:14}}>
-        <div className="rec-label">✓ AGENT RECOMMENDATION</div>
-        <div className="rec-title">Refactor First — Then Ship Features</div>
-        <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
-
-        <div className="nego-bullets-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-          <div>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>IF YOU BUILD NOW</div>
-            {nego.optA_items.slice(0,3).map((item,i)=>(
-              <div key={i} style={{fontSize:'11.5px',color:'var(--red)',lineHeight:1.85}}>✗ {item}</div>
-            ))}
           </div>
-          <div>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>AFTER REFACTORING</div>
-            {nego.optB_items.slice(0,3).map((item,i)=>(
-              <div key={i} style={{fontSize:'11.5px',color:'var(--green)',lineHeight:1.85}}>✓ {item}</div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <button className="btn btn-success btn-block" onClick={onDashboard}>
-        📊 View Final Dashboard →
-      </button>
+          {/* Recommendation */}
+          <div className="rec-box" style={{marginBottom:14}}>
+            <div className="rec-label">✓ AGENT RECOMMENDATION</div>
+            <div className="rec-title">Refactor First — Then Ship Features</div>
+            <div className="rec-body" style={{marginBottom:16}}>{negotiation.reason}</div>
+            <div className="nego-bullets-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>IF YOU BUILD NOW</div>
+                {nego.optA_items.slice(0,3).map((item,i)=>(
+                  <div key={i} style={{fontSize:'11.5px',color:'var(--red)',lineHeight:1.85}}>✗ {item}</div>
+                ))}
+              </div>
+              <div>
+                <div style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--dim)',letterSpacing:'.08em',marginBottom:8}}>AFTER REFACTORING</div>
+                {nego.optB_items.slice(0,3).map((item,i)=>(
+                  <div key={i} style={{fontSize:'11.5px',color:'var(--green)',lineHeight:1.85}}>✓ {item}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button className="btn btn-success btn-block" onClick={onDashboard}>
+            📊 View Final Report →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1370,7 +1382,7 @@ function App() {
     addLog(`✓ Cost model ready`,'ok');
     setCostData(c);
     setCalculating(false);
-    setPhase('cost');
+    setPhase('decision');
   };
 
   const runNegotiation = async () => {
@@ -1397,7 +1409,6 @@ function App() {
     };
     setNegotiation(nego);
     setNegotiating(false);
-    setPhase('nego');
     addLog(`✓ Negotiation complete — recommendation ready`,'ok');
   };
 
@@ -1435,9 +1446,8 @@ function App() {
         <div className="main-area">
           {phase==='landing'   && <PhaseLanding onSelectProduct={selectProductFromLanding}/>}
           {phase==='features'  && <PhaseFeatures product={product} jiraItems={activeJiraItems} repoData={activeRepoData} onScan={scanAllRepos} scanning={scanning} scanned={scanned} onContinue={()=>setPhase('debt')}/>}
-          {phase==='debt'      && <PhaseDebt debts={ALL_DEBTS} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData} onContinue={()=>setPhase('cost')}/>}
-          {phase==='cost'      && <PhaseCost costData={costData} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation} onContinue={()=>setPhase('nego')}/>}
-          {phase==='nego'      && <PhaseNego negotiation={negotiation} costData={costData} nego={product.nego} jiraCount={activeJiraItems.length} onDashboard={()=>setPhase('dashboard')}/>}
+          {phase==='debt'      && <PhaseDebt debts={ALL_DEBTS} selected={selectedDebts} onToggle={toggleDebt} onCalc={calcCost} calculating={calculating} costData={costData} onContinue={()=>setPhase('decision')}/>}
+          {phase==='decision'  && <PhaseDecision costData={costData} onNegotiate={runNegotiation} negotiating={negotiating} negotiation={negotiation} nego={product.nego} onDashboard={()=>setPhase('dashboard')}/>}
           {phase==='dashboard' && <PhaseDashboard costData={costData} negotiation={negotiation} selectedDebts={selectedDebts} allDebts={ALL_DEBTS} nego={product.nego} jiraItems={activeJiraItems}/>}
         </div>
 
