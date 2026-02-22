@@ -419,6 +419,13 @@ body {
 
   /* Buttons */
   .btn { min-height: 40px; }
+
+  /* Features screen — move scan button above repo section on mobile */
+  .features-layout { display: flex; flex-direction: column; }
+  .features-header { order: 1; }
+  .features-list   { order: 2; }
+  .features-btn    { order: 3; margin-bottom: 16px; }
+  .features-repo   { order: 4; }
 }
 
 /* ── Stepper ── */
@@ -929,10 +936,10 @@ function jiraIssueUrl(key, projectKey) {
 function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned, onContinue}) {
   const repos = Object.values(repoData);
   return (
-    <div className="fade-in">
+    <div className="fade-in features-layout">
 
       {/* Features list */}
-      <div className="phase-header" style={{marginBottom:14}}>
+      <div className="phase-header features-header" style={{marginBottom:14}}>
         <div className="phase-icon">🎫</div>
         <div>
           <div className="phase-title">Requested Features</div>
@@ -940,7 +947,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
         </div>
       </div>
 
-      <div style={{marginBottom:20}}>
+      <div className="features-list" style={{marginBottom:20}}>
         {jiraItems.map(item => (
           <div key={item.key} style={{
             display:'flex', alignItems:'center', gap:12,
@@ -963,7 +970,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
       </div>
 
       {/* Repository */}
-      <div style={{marginBottom:20}}>
+      <div className="features-repo" style={{marginBottom:16}}>
         <div className="repo-box" style={{marginBottom:6}}>
           <div className="repo-icon">⚙️</div>
           <div style={{flex:1}}>
@@ -975,7 +982,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
         <input className="input-field" readOnly value={product.githubUrl}/>
       </div>
 
-      <div style={{position:'sticky', bottom:0, background:'var(--bg)', paddingTop:12, paddingBottom:6}}>
+      <div className="features-btn">
       {!scanned ? (
         <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
           {scanning ? <><span className="spin">⟳</span> Scanning repositories…</> : '🔍 Scan the Repository for Tech Debts'}
