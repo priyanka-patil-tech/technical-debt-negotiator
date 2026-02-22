@@ -417,6 +417,11 @@ body {
   /* Debt list — unconstrain height, let .main-area handle the scroll */
   .debt-list { max-height: none !important; overflow-y: visible !important; }
 
+  /* Requested Features items */
+  .feature-item { padding: 7px 10px !important; gap: 8px !important; margin-bottom: 4px !important; }
+  .feature-item .jira-key { font-size: 9px; }
+  .feature-item-title { font-size: 11px !important; }
+
   /* Buttons */
   .btn { min-height: 40px; }
 
@@ -944,7 +949,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
 
         <div style={{marginBottom:20}}>
           {jiraItems.map(item => (
-            <div key={item.key} style={{
+            <div key={item.key} className="feature-item" style={{
               display:'flex', alignItems:'center', gap:12,
               padding:'11px 14px',
               border:'1px solid var(--border)',
@@ -954,7 +959,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
               marginBottom:6,
             }}>
               <span className="jira-key" style={{flexShrink:0}}>{item.key}</span>
-              <span style={{flex:1, fontSize:'13px', color:'var(--soft)', lineHeight:1.4}}>{item.title}</span>
+              <span className="feature-item-title" style={{flex:1, fontSize:'13px', color:'var(--soft)', lineHeight:1.4}}>{item.title}</span>
               <a href={jiraIssueUrl(item.key, product.project.key)} target="_blank" rel="noopener noreferrer"
                 style={{fontFamily:"'JetBrains Mono',monospace",fontSize:'9px',color:'var(--blue)',textDecoration:'none',
                         padding:'4px 10px',border:'1px solid var(--blue-border)',borderRadius:'4px',whiteSpace:'nowrap',flexShrink:0}}>
