@@ -429,6 +429,15 @@ body {
   /* Buttons */
   .btn { min-height: 40px; }
 
+  /* Floating action bar — pin to bottom of viewport */
+  .phase-action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 10px 14px 14px;
+    z-index: 200;
+  }
+
   /* Negotiation & Report page — scale down large type */
   .kpi-val { font-size: 18px !important; }
   .section-title { font-size: 15px !important; }
@@ -496,6 +505,7 @@ body {
   transition: border-color .15s;
 }
 .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,.15); }
+.phase-action-bar { flex-shrink: 0; padding-top: 12px; padding-bottom: 4px; }
 .input-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase;
@@ -949,7 +959,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
     <div className="fade-in" style={{display:'flex', flexDirection:'column', height:'100%'}}>
 
       {/* Scrollable content */}
-      <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch'}}>
+      <div style={{flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom:72}}>
 
         <div className="phase-header" style={{marginBottom:14}}>
           <div className="phase-icon">🎫</div>
@@ -996,7 +1006,7 @@ function PhaseFeatures({product, jiraItems, repoData, onScan, scanning, scanned,
       </div>
 
       {/* Button always pinned at bottom */}
-      <div style={{flexShrink:0, paddingTop:12, paddingBottom:4}}>
+      <div className="phase-action-bar">
         {!scanned ? (
           <button className="btn btn-primary btn-block" onClick={onScan} disabled={scanning}>
             {scanning ? <><span className="spin">⟳</span> Scanning repositories…</> : '🔍 Scan the Repository for Tech Debts'}
